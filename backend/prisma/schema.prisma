@@ -1,0 +1,661 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+
+model User {
+  id                String    @id @default(uuid())
+  username          String    @unique
+  email             String    @unique
+  passwordHash      String
+  avatarUrl         String?
+  bannerUrl         String?
+  status            UserStatus @default(OFFLINE)
+  currentGameId     String?
+  currentGame       Game?      @relation("CurrentlyPlaying", fields: [currentGameId], references: [id])
+
+  xpGlobal          Int       @default(0)
+  levelGlobal       Int       @default(1)
+
+  displayedTitleId  String?
+  displayedTitle    Title?    @relation(fields: [displayedTitleId], references: [id])
+
+  isPremium         Boolean   @default(false)
+  premiumUntil      DateTime?
+
+  isBanned          Boolean   @default(false)
+  bannedReason      String?
+  bannedAt          DateTime?
+
+  isAdmin           Boolean   @default(false)
+
+  language          String    @default("fr")
+  colorblindMode    Boolean   @default(false)
+  highContrast      Boolean   @default(false)
+
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+
+  // Relations
+  tokens            AuthToken[]
+  loginHistory      LoginHistory[]
+  library           LibraryEntry[]
+  sessions          PlaySession[]
+  reviews           Review[]
+  wishlist          WishlistEntry[]
+  achievements      UserAchievement[]
+  leaderboardScores LeaderboardScore[]
+  seasonRewards     UserSeasonReward[]
+
+  friendshipsSent     Friendship[]      @relation("FriendshipRequester")
+  friendshipsReceived Friendship[]      @relation("FriendshipAddressee")
+
+  invitesSent       GameInvite[]      @relation("InviteSender")
+  invitesReceived   GameInvite[]      @relation("InviteReceiver")
+
+  notifications     Notification[]
+  clips             Clip[]
+
+  reportsFiled      Report[]          @relation("ReportFiler")
+  reportsAgainst    Report[]          @relation("ReportTarget")
+
+  auditLogs         AuditLog[]
+
+  purchases         Purchase[]
+  giftsSent         Gift[]            @relation("GiftSender")
+  giftsReceived     Gift[]            @relation("GiftReceiver")
+  redeemedCodes     RedeemedCode[]
+
+  marketListings    MarketListing[]   @relation("ListingSeller")
+  marketPurchases   MarketListing[]   @relation("ListingBuyer")
+
+  battlePassProgress BattlePassProgress[]
+
+  keybindings       KeyBinding[]
+
+  featureFlagOverrides FeatureFlagAssignment[]
+
+  @@index([status])
+}
+
+enum UserStatus {
+  ONLINE
+  IN_GAME
+  AWAY
+  INVISIBLE
+  OFFLINE
+}
+
+model AuthToken {
+  id          String   @id @default(uuid())
+  token       String   @unique
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  deviceName  String?
+  deviceInfo  String?
+  ipAddress   String?
+  lastUsedAt  DateTime @default(now())
+  createdAt   DateTime @default(now())
+  revokedAt   DateTime?
+
+  @@index([userId])
+}
+
+model LoginHistory {
+  id          String   @id @default(uuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  ipAddress   String?
+  userAgent   String?
+  location    String?
+  success     Boolean  @default(true)
+  createdAt   DateTime @default(now())
+
+  @@index([userId])
+}
+
+model Title {
+  id          String   @id @default(uuid())
+  name        String   @unique
+  description String?
+  rarity      Rarity   @default(COMMON)
+  users       User[]
+
+  achievementId String? @unique
+  achievement   Achievement? @relation(fields: [achievementId], references: [id])
+}
+
+
+model Game {
+  id             String    @id @default(uuid())
+  slug           String    @unique
+  title          String
+  description    String?   @db.Text
+  coverUrl       String?
+  bannerUrl      String?
+  launchUrl      String    // URL de l'API/jeu propriétaire à lancer
+  apiKey         String?   // clé pour communiquer avec l'API du jeu
+
+  isPremiumOnly  Boolean   @default(false)
+  price          Decimal?  @db.Decimal(10, 2)
+
+  isFeatured     Boolean   @default(false)
+  featuredFrom   DateTime?
+  featuredUntil  DateTime?
+
+  releaseDate    DateTime?
+  isPublished    Boolean   @default(false)
+
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  // Relations
+  tags           GameTag[]
+  library        LibraryEntry[]
+  sessions       PlaySession[]
+  reviews        Review[]
+  wishlist       WishlistEntry[]
+  achievements   Achievement[]
+  leaderboards   Leaderboard[]
+  versions       GameVersion[]
+  invites        GameInvite[]
+  currentPlayers User[]         @relation("CurrentlyPlaying")
+  clips          Clip[]
+  purchases      Purchase[]
+  gifts          Gift[]
+  reports        Report[]       @relation("ReportedGame")
+
+  @@index([isFeatured])
+  @@index([isPublished])
+}
+
+model Tag {
+  id    String    @id @default(uuid())
+  name  String    @unique
+  games GameTag[]
+}
+
+model GameTag {
+  gameId String
+  tagId  String
+  game   Game @relation(fields: [gameId], references: [id], onDelete: Cascade)
+  tag    Tag  @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+  @@id([gameId, tagId])
+}
+
+model GameVersion {
+  id          String   @id @default(uuid())
+  gameId      String
+  game        Game     @relation(fields: [gameId], references: [id], onDelete: Cascade)
+  versionTag  String   // ex: "1.4.2"
+  changelog   String   @db.Text
+  isRollback  Boolean  @default(false)
+  isCurrent   Boolean  @default(false)
+  releasedAt  DateTime @default(now())
+  releasedBy  String?  // adminId
+
+  @@index([gameId])
+}
+
+model LibraryEntry {
+  id           String   @id @default(uuid())
+  userId       String
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  gameId       String
+  game         Game     @relation(fields: [gameId], references: [id], onDelete: Cascade)
+
+  isFavorite   Boolean  @default(false)
+  totalPlaytimeSec Int  @default(0)
+
+  cloudSaveData Json?
+  cloudSaveUpdatedAt DateTime?
+
+  acquiredAt   DateTime @default(now())
+
+  @@unique([userId, gameId])
+  @@index([userId])
+}
+
+model WishlistEntry {
+  id       String   @id @default(uuid())
+  userId   String
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  gameId   String
+  game     Game     @relation(fields: [gameId], references: [id], onDelete: Cascade)
+  addedAt  DateTime @default(now())
+
+  @@unique([userId, gameId])
+}
+
+model PlaySession {
+  id          String    @id @default(uuid())
+  userId      String
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  gameId      String
+  game        Game      @relation(fields: [gameId], references: [id], onDelete: Cascade)
+  startedAt   DateTime  @default(now())
+  endedAt     DateTime?
+  durationSec Int?
+
+  @@index([userId, gameId])
+}
+
+model Review {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  gameId    String
+  game      Game     @relation(fields: [gameId], references: [id], onDelete: Cascade)
+  rating    Int      // 1-5
+  comment   String?  @db.Text
+  createdAt DateTime @default(now())
+
+  @@unique([userId, gameId])
+  @@index([gameId])
+}
+
+
+model Friendship {
+  id           String           @id @default(uuid())
+  requesterId  String
+  requester    User             @relation("FriendshipRequester", fields: [requesterId], references: [id], onDelete: Cascade)
+  addresseeId  String
+  addressee    User             @relation("FriendshipAddressee", fields: [addresseeId], references: [id], onDelete: Cascade)
+  status       FriendshipStatus @default(PENDING)
+  createdAt    DateTime         @default(now())
+  updatedAt    DateTime         @updatedAt
+
+  @@unique([requesterId, addresseeId])
+}
+
+enum FriendshipStatus {
+  PENDING
+  ACCEPTED
+  DECLINED
+  BLOCKED
+}
+
+model GameInvite {
+  id          String       @id @default(uuid())
+  senderId    String
+  sender      User         @relation("InviteSender", fields: [senderId], references: [id], onDelete: Cascade)
+  receiverId  String
+  receiver    User         @relation("InviteReceiver", fields: [receiverId], references: [id], onDelete: Cascade)
+  gameId      String
+  game        Game         @relation(fields: [gameId], references: [id], onDelete: Cascade)
+  status      InviteStatus @default(PENDING)
+  createdAt   DateTime     @default(now())
+  respondedAt DateTime?
+
+  @@index([receiverId])
+}
+
+enum InviteStatus {
+  PENDING
+  ACCEPTED
+  DECLINED
+  EXPIRED
+}
+
+model Clip {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  gameId    String
+  game      Game     @relation(fields: [gameId], references: [id], onDelete: Cascade)
+  mediaUrl  String
+  type      ClipType @default(SCREENSHOT)
+  createdAt DateTime @default(now())
+
+  @@index([gameId])
+}
+
+enum ClipType {
+  SCREENSHOT
+  REPLAY
+}
+
+model Achievement {
+  id           String   @id @default(uuid())
+  gameId       String
+  game         Game     @relation(fields: [gameId], references: [id], onDelete: Cascade)
+  name         String
+  description  String?
+  iconUrl      String?
+  points       Int      @default(10)
+  rarity       Rarity   @default(COMMON)
+  isSecret     Boolean  @default(false)
+  unlockedPercent Float @default(0) // recalculé périodiquement
+
+  users        UserAchievement[]
+  linkedTitle  Title?
+
+  @@index([gameId])
+}
+
+enum Rarity {
+  COMMON
+  UNCOMMON
+  RARE
+  EPIC
+  LEGENDARY
+}
+
+model UserAchievement {
+  id            String      @id @default(uuid())
+  userId        String
+  user          User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  achievementId String
+  achievement   Achievement @relation(fields: [achievementId], references: [id], onDelete: Cascade)
+  unlockedAt    DateTime    @default(now())
+
+  @@unique([userId, achievementId])
+  @@index([achievementId])
+}
+
+model Leaderboard {
+  id        String   @id @default(uuid())
+  gameId    String
+  game      Game     @relation(fields: [gameId], references: [id], onDelete: Cascade)
+  name      String
+  period    LeaderboardPeriod @default(ALL_TIME)
+  sortOrder SortOrder @default(DESC)
+
+  scores    LeaderboardScore[]
+
+  @@index([gameId])
+}
+
+enum LeaderboardPeriod {
+  DAILY
+  WEEKLY
+  MONTHLY
+  ALL_TIME
+}
+
+enum SortOrder {
+  ASC
+  DESC
+}
+
+model LeaderboardScore {
+  id            String      @id @default(uuid())
+  leaderboardId String
+  leaderboard   Leaderboard @relation(fields: [leaderboardId], references: [id], onDelete: Cascade)
+  userId        String
+  user          User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  score         Float
+  replayUrl     String?
+  recordedAt    DateTime    @default(now())
+
+  @@index([leaderboardId, score])
+  @@index([userId])
+}
+
+model Season {
+  id          String   @id @default(uuid())
+  name        String
+  startsAt    DateTime
+  endsAt      DateTime
+  rewards     SeasonReward[]
+}
+
+model SeasonReward {
+  id          String   @id @default(uuid())
+  seasonId    String
+  season      Season   @relation(fields: [seasonId], references: [id], onDelete: Cascade)
+  rankMin     Int
+  rankMax     Int
+  rewardType  String   // ex: "banner", "title", "avatar"
+  rewardRef   String   // id/url de la récompense cosmétique
+
+  users       UserSeasonReward[]
+}
+
+model UserSeasonReward {
+  id             String       @id @default(uuid())
+  userId         String
+  user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  seasonRewardId String
+  seasonReward   SeasonReward @relation(fields: [seasonRewardId], references: [id], onDelete: Cascade)
+  grantedAt      DateTime     @default(now())
+
+  @@unique([userId, seasonRewardId])
+}
+
+model Notification {
+  id        String           @id @default(uuid())
+  userId    String
+  user      User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type      NotificationType
+  payload   Json?
+  isRead    Boolean          @default(false)
+  createdAt DateTime         @default(now())
+
+  @@index([userId, isRead])
+}
+
+enum NotificationType {
+  FRIEND_ONLINE
+  FRIEND_REQUEST
+  GAME_INVITE
+  ACHIEVEMENT_UNLOCKED
+  GAME_UPDATE
+  SEASON_REWARD
+  GIFT_RECEIVED
+  SYSTEM
+}
+
+model AuditLog {
+  id         String   @id @default(uuid())
+  adminId    String
+  admin      User     @relation(fields: [adminId], references: [id], onDelete: Cascade)
+  action     String   // ex: "GAME_CREATE", "USER_BAN"
+  targetType String?  // ex: "Game", "User"
+  targetId   String?
+  details    Json?
+  createdAt  DateTime @default(now())
+
+  @@index([adminId])
+  @@index([targetType, targetId])
+}
+
+model FeatureFlag {
+  id           String   @id @default(uuid())
+  key          String   @unique
+  description  String?
+  isEnabled    Boolean  @default(false)
+  rolloutPercent Int    @default(0) // 0-100
+
+  assignments  FeatureFlagAssignment[]
+}
+
+model FeatureFlagAssignment {
+  id            String      @id @default(uuid())
+  featureFlagId String
+  featureFlag   FeatureFlag @relation(fields: [featureFlagId], references: [id], onDelete: Cascade)
+  userId        String
+  user          User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  isEnabled     Boolean
+
+  @@unique([featureFlagId, userId])
+}
+
+model Report {
+  id           String       @id @default(uuid())
+  filedById    String
+  filedBy      User         @relation("ReportFiler", fields: [filedById], references: [id], onDelete: Cascade)
+  targetUserId String?
+  targetUser   User?        @relation("ReportTarget", fields: [targetUserId], references: [id], onDelete: Cascade)
+  targetGameId String?
+  targetGame   Game?        @relation("ReportedGame", fields: [targetGameId], references: [id], onDelete: Cascade)
+  type         ReportType
+  description  String       @db.Text
+  status       ReportStatus @default(OPEN)
+  createdAt    DateTime     @default(now())
+  resolvedAt   DateTime?
+
+  @@index([status])
+}
+
+enum ReportType {
+  BUG
+  PLAYER_MISCONDUCT
+  CONTENT_ISSUE
+  OTHER
+}
+
+enum ReportStatus {
+  OPEN
+  RESOLVED
+  REJECTED
+}
+
+model Purchase {
+  id         String   @id @default(uuid())
+  userId     String
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  gameId     String?
+  game       Game?    @relation(fields: [gameId], references: [id], onDelete: SetNull)
+  type       PurchaseType
+  amount     Decimal  @db.Decimal(10, 2)
+  currency   String   @default("EUR")
+  status     PurchaseStatus @default(COMPLETED)
+  createdAt  DateTime @default(now())
+
+  @@index([userId])
+}
+
+enum PurchaseType {
+  GAME
+  PREMIUM_SUBSCRIPTION
+  BATTLE_PASS
+  COSMETIC
+  GIFT_CARD
+}
+
+enum PurchaseStatus {
+  PENDING
+  COMPLETED
+  REFUNDED
+  FAILED
+}
+
+model Gift {
+  id          String     @id @default(uuid())
+  senderId    String
+  sender      User       @relation("GiftSender", fields: [senderId], references: [id], onDelete: Cascade)
+  receiverId  String
+  receiver    User       @relation("GiftReceiver", fields: [receiverId], references: [id], onDelete: Cascade)
+  gameId      String?
+  game        Game?      @relation(fields: [gameId], references: [id], onDelete: SetNull)
+  cosmeticRef String?
+  message     String?
+  createdAt   DateTime   @default(now())
+}
+
+model PromoCode {
+  id           String   @id @default(uuid())
+  code         String   @unique
+  type         PurchaseType
+  value        Decimal? @db.Decimal(10, 2) // ex: montant crédité
+  gameId       String?  // si code = jeu offert
+  maxUses      Int?
+  usesCount    Int      @default(0)
+  expiresAt    DateTime?
+  createdAt    DateTime @default(now())
+
+  redemptions  RedeemedCode[]
+}
+
+model RedeemedCode {
+  id          String    @id @default(uuid())
+  userId      String
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  promoCodeId String
+  promoCode   PromoCode @relation(fields: [promoCodeId], references: [id], onDelete: Cascade)
+  redeemedAt  DateTime  @default(now())
+
+  @@unique([userId, promoCodeId])
+}
+
+model MarketListing {
+  id          String       @id @default(uuid())
+  sellerId    String
+  seller      User         @relation("ListingSeller", fields: [sellerId], references: [id], onDelete: Cascade)
+  buyerId     String?
+  buyer       User?        @relation("ListingBuyer", fields: [buyerId], references: [id], onDelete: SetNull)
+  cosmeticType String      // "avatar", "banner"
+  cosmeticRef String
+  price       Decimal      @db.Decimal(10, 2)
+  status      ListingStatus @default(ACTIVE)
+  createdAt   DateTime     @default(now())
+  soldAt      DateTime?
+}
+
+enum ListingStatus {
+  ACTIVE
+  SOLD
+  CANCELLED
+}
+
+model BattlePass {
+  id         String   @id @default(uuid())
+  seasonName String
+  startsAt   DateTime
+  endsAt     DateTime
+  tiers      BattlePassTier[]
+}
+
+model BattlePassTier {
+  id           String     @id @default(uuid())
+  battlePassId String
+  battlePass   BattlePass @relation(fields: [battlePassId], references: [id], onDelete: Cascade)
+  tierNumber   Int
+  xpRequired   Int
+  rewardType   String     // "cosmetic", "title", "banner"
+  rewardRef    String
+  isPremiumOnly Boolean   @default(false)
+
+  progress     BattlePassProgress[]
+
+  @@unique([battlePassId, tierNumber])
+}
+
+model BattlePassProgress {
+  id       String         @id @default(uuid())
+  userId   String
+  user     User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tierId   String
+  tier     BattlePassTier @relation(fields: [tierId], references: [id], onDelete: Cascade)
+  unlockedAt DateTime     @default(now())
+
+  @@unique([userId, tierId])
+}
+
+
+model KeyBinding {
+  id       String @id @default(uuid())
+  userId   String
+  user     User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  action   String // ex: "OPEN_LIBRARY", "TOGGLE_FRIENDS"
+  key      String // ex: "Ctrl+L"
+
+  @@unique([userId, action])
+}
+
+model Translation {
+  id     String @id @default(uuid())
+  key    String // ex: "nav.home"
+  locale String // ex: "fr", "en"
+  value  String
+
+  @@unique([key, locale])
+}
