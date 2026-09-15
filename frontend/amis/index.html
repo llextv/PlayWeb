@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>PlayWeb - Amis</title>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <link rel="stylesheet" href="../style.css" />
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body data-page="friends">
+    <div class="background-glow">
+      <div class="glow-1"></div>
+      <div class="glow-2"></div>
+    </div>
+    <div id="app"></div>
+    <div id="toast" class="toast-wrap" role="status" aria-live="polite"></div>
+
+    <template id="page-template">
+      <main class="friends-content">
+        <section class="friends-hero">
+          <h1>Mes amis</h1>
+          <p>Invite, suis et défie tes potes pour grimper plus vite.</p>
+        </section>
+
+        <section class="profile-card">
+          <h2><i data-lucide="user"></i> Mon profil</h2>
+          <div class="profile-info">
+            <p class="profile-pseudo">
+              Votre pseudo : <span data-profile-name></span>
+            </p>
+          </div>
+          <form class="profile-form" data-profile-form>
+            <div class="profile-input-group">
+              <input
+                type="text"
+                maxlength="24"
+                placeholder="Nouveau pseudo"
+                data-profile-input
+                required
+              />
+              <button type="submit">
+                <i data-lucide="check"></i>
+                <span>Modifier</span>
+              </button>
+            </div>
+            <p
+              class="profile-feedback"
+              data-profile-feedback
+              aria-live="polite"
+            ></p>
+          </form>
+        </section>
+
+        <section class="friends-grid">
+          <article class="friends-card add-friend-card">
+            <h2><i data-lucide="user-plus"></i> Ajouter un ami</h2>
+            <div class="invite-row">
+              <input
+                type="text"
+                placeholder="Pseudo de l'ami"
+                data-invite-input
+              />
+              <button type="button" data-invite-button>Envoyer</button>
+            </div>
+          </article>
+
+          <article class="friends-card">
+            <h2><i data-lucide="user-round-plus"></i> Vos demandes d'amis</h2>
+            <div class="request-list" data-request-list>
+              <p class="friends-empty">Aucune demande en attente</p>
+            </div>
+          </article>
+        </section>
+
+        <section class="friends-list-card">
+          <div class="friends-list-head">
+            <h2>Liste d'amis</h2>
+            <span data-friends-count></span>
+          </div>
+          <div class="friends-list" data-friends-list></div>
+        </section>
+      </main>
+    </template>
+
+    <script src="../script.js"></script>
+    <script src="script.js"></script>
+  </body>
+</html>

@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>PlayWeb - Profil</title>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <link rel="stylesheet" href="../style.css" />
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body data-page="profile">
+    <div class="background-glow">
+      <div class="glow-1"></div>
+      <div class="glow-2"></div>
+    </div>
+    <div id="app"></div>
+    <div id="toast" class="toast-wrap"></div>
+    <template id="page-template"
+      ><div class="grid two">
+        <section class="card">
+          <div class="row">
+            <div class="avatar profile-avatar" data-profile-avatar></div>
+            <span class="tag" data-profile-status></span>
+          </div>
+          <h2 data-profile-name></h2>
+          <div class="muted" data-profile-title></div>
+          <div class="progress"><i style="width: 74%"></i></div>
+          <div class="row small">
+            <b data-profile-level></b
+            ><span class="muted" data-profile-xp></span>
+          </div>
+          <button class="btn profile-edit">Modifier le profil</button>
+        </section>
+        <section class="card">
+          <div class="eyebrow">Sécurité</div>
+          <h2>Sessions & tokens</h2>
+          <p class="muted small">
+            Token actuel : <code data-session-token></code>
+          </p>
+          <div class="list">
+            <div class="list-item">
+              <span class="badge"><i data-lucide="monitor"></i></span>
+              <div class="grow">
+                <b>Session navigateur</b>
+                <div class="small tag">Active maintenant</div>
+              </div>
+              <button class="btn danger profile-revoke">Révoquer</button>
+            </div>
+          </div>
+        </section>
+      </div></template
+    >
+    <script src="../script.js"></script>
+    <script src="script.js"></script>
+  </body>
+</html>

@@ -7,7 +7,7 @@
     <script src="https://unpkg.com/lucide@latest"></script>
     <link rel="stylesheet" href="style.css" />
   </head>
-  <body>
+  <body data-page="library">
     <div class="background-glow">
       <div class="glow-1"></div>
       <div class="glow-2"></div>
@@ -24,21 +24,24 @@
             <span class="brand-mark">PW</span><span>PlayWeb</span>
           </div>
           <nav class="nav">
-            <button class="btn-nav" data-view="shop">
+            <a class="btn-nav" data-view="shop" href="../index/index.html">
               <i data-lucide="store"></i><span>Jeux</span>
-            </button>
-            <button class="btn-nav" data-view="friends">
+            </a>
+            <a class="btn-nav" data-view="friends" href="../amis/index.html">
               <i data-lucide="users"></i><span>Amis</span>
-            </button>
-            <button class="btn-nav" data-view="achievements">
+            </a>
+            <a class="btn-nav" data-view="achievements" href="../succes/index.html">
               <i data-lucide="trophy"></i><span>Succès</span>
-            </button>
-            <button class="btn-nav" data-view="leaderboard">
+            </a>
+            <a class="btn-nav" data-view="leaderboard" href="../leaderboard/index.html">
               <i data-lucide="bar-chart"></i><span>Leaderboard</span>
-            </button>
-            <button class="btn-nav" data-view="profile">
+            </a>
+            <a class="btn-nav" data-view="profile" href="../profil/index.html">
               <i data-lucide="user"></i><span>Profil</span>
-            </button>
+            </a>
+            <a class="btn-nav" data-view="updates" href="../mises-a-jour/index.html">
+              <i data-lucide="scroll-text"></i><span>Mises à jour</span>
+            </a>
           </nav>
           <div class="side-foot">
             <div class="user-mini">
@@ -168,6 +171,82 @@
           <span class="muted small">3 jeux</span>
         </div>
         <div class="grid" id="games"></div>
+      </div>
+    </template>
+
+    <template id="updates-template">
+      <div class="updates-content">
+        <section class="updates-card updates-intro">
+          <div class="updates-card-header">
+            <i data-lucide="scroll-text"></i>
+            <div>
+              <div class="eyebrow">Journal de développement</div>
+              <h2>Mises à jour</h2>
+            </div>
+            <span class="version-badge">PlayWeb</span>
+          </div>
+          <p>
+            Retrouve ici les nouveautés, améliorations et corrections apportées
+            aux jeux disponibles sur PlayWeb.
+          </p>
+        </section>
+
+        <section class="updates-card patchnote-card">
+          <div class="updates-card-header">
+            <i data-lucide="sparkles"></i>
+            <h2>BrainrotStar</h2>
+            <span class="version-badge">V1.0.0</span>
+            <span class="version-date">15/09/2026</span>
+          </div>
+
+          <div class="patchnote-content">
+            <div class="patchnote-section">
+              <div class="patchnote-section-header">
+                <i data-lucide="plus-circle"></i>
+                <h3>Nouveautés</h3>
+              </div>
+              <ul class="patchnote-list">
+                <li><span class="new-badge">NOUVEAU</span> Ajout de BrainrotStar sur PlayWeb</li>
+                <li><span class="new-badge">NOUVEAU</span> Nouvelle carte de jeu dédiée au mode multi et solo</li>
+                <li><span class="new-badge">NOUVEAU</span> Première base de patch notes centralisée</li>
+              </ul>
+            </div>
+
+            <div class="patchnote-section">
+              <div class="patchnote-section-header">
+                <i data-lucide="zap"></i>
+                <h3>Améliorations</h3>
+              </div>
+              <ul class="patchnote-list">
+                <li><span class="improve-badge">AMÉLIORATION</span> Harmonisation de l'affichage des cartes de jeux</li>
+                <li><span class="improve-badge">AMÉLIORATION</span> Interface responsive sur mobile et tablette</li>
+              </ul>
+            </div>
+
+            <div class="patchnote-section">
+              <div class="patchnote-section-header">
+                <i data-lucide="wrench"></i>
+                <h3>Corrections de bugs</h3>
+              </div>
+              <ul class="patchnote-list">
+                <li><span class="fix-badge">FIX</span> Correction de l'affichage du mode MULTI sur les cartes de jeux</li>
+                <li><span class="fix-badge">FIX</span> Correction du centrage des cartes dans la grille</li>
+              </ul>
+            </div>
+          </div>
+        </section>
+
+        <section class="updates-card">
+          <div class="updates-card-header">
+            <i data-lucide="gamepad-2"></i>
+            <h2>GambleKing</h2>
+            <span class="version-badge">Bientôt</span>
+          </div>
+          <p class="updates-muted">
+            Les prochaines informations et patch notes de GambleKing seront
+            publiées ici.
+          </p>
+        </section>
       </div>
     </template>
 
@@ -526,3 +605,5 @@
     <script src="script.js"></script>
   </body>
 </html>
+
+

@@ -1,0 +1,112 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>PlayWeb - Classement</title>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <link rel="stylesheet" href="../style.css" />
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body data-page="leaderboard">
+    <div class="background-glow">
+      <div class="glow-1"></div>
+      <div class="glow-2"></div>
+    </div>
+    <div id="app"></div>
+    <div id="toast" class="toast-wrap" role="status" aria-live="polite"></div>
+
+    <template id="page-template">
+      <main class="ranking-content">
+        <section class="publish-cta-card">
+          <div>
+            <h2>Mon profil</h2>
+            <p>Consulte ton classement et modifie ton pseudo ci-dessous.</p>
+          </div>
+          <button
+            class="btn-scroll-publish"
+            type="button"
+            data-scroll-profile
+            aria-label="Aller à mon profil"
+          >
+            <i data-lucide="arrow-down"></i>
+          </button>
+        </section>
+
+        <section class="ranking-card">
+          <div class="ranking-header">
+            <div>
+              <h1>Classement des joueurs</h1>
+              <p class="ranking-subtitle">Top joueurs de PlayWeb</p>
+            </div>
+            <div class="sort-controls">
+              <label for="sort-by">Trier par</label>
+              <select id="sort-by" class="sort-select">
+                <option value="rank">Classement</option>
+                <option value="name">Pseudo</option>
+                <option value="xp">XP</option>
+                <option value="level">Niveau</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="ranking-table-wrap">
+            <table class="ranking-table">
+              <thead>
+                <tr>
+                  <th>#</th>
+                  <th>Pseudo</th>
+                  <th>Niveau</th>
+                  <th>XP</th>
+                  <th>Titre</th>
+                </tr>
+              </thead>
+              <tbody data-ranking-body></tbody>
+            </table>
+          </div>
+
+          <p class="ranking-disclaimer">
+            ⚠️ Ce classement affiche les meilleurs joueurs de PlayWeb.
+          </p>
+        </section>
+
+        <section class="publish-card" data-profile-section>
+          <h2>Votre profil</h2>
+          <div class="user-stats">
+            <p class="user-rank">Vous êtes <span data-user-rank>...</span></p>
+            <p class="user-pseudo-display">
+              Votre pseudo est : <span data-user-pseudo></span>
+            </p>
+          </div>
+
+          <form class="publish-form" data-publish-form>
+            <div class="publish-grid">
+              <label>
+                Modifier mon pseudo
+                <input
+                  type="text"
+                  maxlength="24"
+                  placeholder="Nouveau pseudo"
+                  data-publish-name
+                  required
+                />
+              </label>
+            </div>
+            <button type="submit" class="btn-publish">
+              <i data-lucide="edit"></i>
+              <span>Modifier mon pseudo</span>
+            </button>
+          </form>
+          <p
+            class="publish-feedback"
+            data-publish-feedback
+            aria-live="polite"
+          ></p>
+        </section>
+      </main>
+    </template>
+
+    <script src="../script.js"></script>
+    <script src="script.js"></script>
+  </body>
+</html>

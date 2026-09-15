@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>PlayWeb - Succès</title>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <link rel="stylesheet" href="../style.css" />
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body data-page="achievements">
+    <div class="background-glow">
+      <div class="glow-1"></div>
+      <div class="glow-2"></div>
+    </div>
+    <div id="app"></div>
+    <div id="toast" class="toast-wrap"></div>
+    <template id="page-template"
+      ><section class="card achievement-progress">
+        <div class="row">
+          <div>
+            <div class="eyebrow">Progression globale</div>
+            <h2>
+              <span data-done-count></span> /
+              <span data-achievement-count></span> débloqués
+            </h2>
+          </div>
+          <div class="stat" style="color: var(--accent)">68%</div>
+        </div>
+        <div class="progress"><i style="width: 68%"></i></div>
+      </section>
+      <div class="grid achievements-grid"></div
+    ></template>
+    <script src="../script.js"></script>
+    <script src="script.js"></script>
+  </body>
+</html>

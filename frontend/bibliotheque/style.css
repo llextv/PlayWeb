@@ -107,7 +107,6 @@ button, input, select {
     background: transparent;
     border: 1px solid transparent;
     color: var(--text-muted);
-    text-decoration: none;
     padding: 12px 16px;
     border-radius: 14px;
     font-weight: bold;
