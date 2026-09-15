@@ -15,3 +15,7 @@
   font-weight: 600;
   opacity: 0.9;
 }
+
+.games-grid {
+  align-items: stretch;
+}

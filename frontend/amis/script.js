@@ -1,9 +1,49 @@
-window.pageInit = ({ data, user, setText, toast, icons }) => {
+window.pageInit = ({ data, user, games, setText, toast, icons }) => {
   setText("#page-title", "Équipage");
   setText("[data-profile-name]", user.name);
   setText("[data-friends-count]", `${data.friends.length} amis`);
 
   const friendsList = document.querySelector("[data-friends-list]");
+  const inviteModal = document.querySelector("[data-invite-modal]");
+  const inviteFriend = document.querySelector("[data-invite-friend]");
+  const inviteGame = document.querySelector("[data-invite-game]");
+  let selectedFriend = null;
+
+  inviteGame.innerHTML = games
+    .map((game) => `<option value="${game.id}">${game.name}</option>`)
+    .join("");
+
+  const closeInviteModal = () => {
+    inviteModal.classList.add("hidden");
+    selectedFriend = null;
+  };
+
+  const openInviteModal = (friend) => {
+    selectedFriend = friend;
+    inviteFriend.textContent = friend.name;
+    inviteGame.value = games[0]?.id || "";
+    inviteModal.classList.remove("hidden");
+    inviteGame.focus();
+  };
+
+  document.querySelectorAll("[data-close-invite]").forEach((element) => {
+    element.onclick = closeInviteModal;
+  });
+
+  document.querySelector("[data-invite-form]").onsubmit = (event) => {
+    event.preventDefault();
+    if (!selectedFriend) return;
+    const game = games.find((item) => item.id === inviteGame.value);
+    if (!game) return;
+    closeInviteModal();
+    toast(`Invitation envoyée à ${selectedFriend.name} pour ${game.name}.`);
+  };
+
+  document.addEventListener("keydown", (event) => {
+    if (event.key === "Escape" && !inviteModal.classList.contains("hidden")) {
+      closeInviteModal();
+    }
+  });
 
   data.friends.forEach((friend) => {
     const row = document.createElement("article");
@@ -22,7 +62,7 @@ window.pageInit = ({ data, user, setText, toast, icons }) => {
       </div>`;
 
     row.querySelector(".invite-friend").onclick = () => {
-      toast(`Invitation envoyée à ${friend.name}.`);
+      openInviteModal(friend);
     };
 
     row.querySelector(".remove-friend").onclick = () => {

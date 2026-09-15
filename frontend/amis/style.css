@@ -198,6 +198,129 @@ body {
   text-align: center;
 }
 
+.invite-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  display: grid;
+  place-items: center;
+  padding: 20px;
+}
+
+.invite-modal.hidden {
+  display: none;
+}
+
+.invite-modal-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.78);
+  backdrop-filter: blur(5px);
+}
+
+.invite-modal-card {
+  position: relative;
+  z-index: 1;
+  width: min(500px, 100%);
+  padding: 28px;
+  border: 1px solid rgba(249, 115, 22, 0.4);
+  border-radius: 22px;
+  background:
+    linear-gradient(135deg, rgba(249, 115, 22, 0.14), rgba(220, 38, 38, 0.03)),
+    #171717;
+  box-shadow: 0 24px 70px rgba(0, 0, 0, 0.55);
+}
+
+.invite-modal-close {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+}
+
+.invite-modal-close svg {
+  width: 18px;
+  height: 18px;
+}
+
+.invite-modal-card h2 {
+  margin: 4px 0 8px;
+  font-size: 24px;
+}
+
+.invite-modal-copy {
+  margin-bottom: 22px;
+  line-height: 1.5;
+}
+
+.invite-modal-form {
+  display: grid;
+  gap: 9px;
+}
+
+.invite-modal-form label {
+  color: var(--text-muted);
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.invite-select-wrap {
+  position: relative;
+}
+
+.invite-game-select {
+  appearance: none;
+  width: 100%;
+  padding: 13px 42px 13px 14px;
+  border: 1px solid var(--card-border-strong);
+  border-radius: 12px;
+  background: rgba(0, 0, 0, 0.3);
+  color: #fff;
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.invite-game-select:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(249, 115, 22, 0.14);
+}
+
+.invite-game-select option {
+  background: #171717;
+  color: #fff;
+}
+
+.invite-select-wrap svg {
+  position: absolute;
+  top: 50%;
+  right: 14px;
+  width: 17px;
+  height: 17px;
+  color: var(--accent);
+  pointer-events: none;
+  transform: translateY(-50%);
+}
+
+.invite-modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 14px;
+}
+
+.invite-modal-actions .btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+}
+
+.invite-modal-actions svg {
+  width: 16px;
+  height: 16px;
+}
+
 @media (max-width: 900px) {
   .friends-grid {
     grid-template-columns: 1fr;
@@ -220,5 +343,17 @@ body {
 
   .friend-actions button {
     flex: 1;
+  }
+
+  .invite-modal-card {
+    padding: 24px 20px;
+  }
+
+  .invite-modal-actions {
+    flex-direction: column-reverse;
+  }
+
+  .invite-modal-actions .btn {
+    width: 100%;
   }
 }

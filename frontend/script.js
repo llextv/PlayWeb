@@ -55,6 +55,16 @@ const games = [
 ];
 
 const defaults = {
+  profile: {
+    name: null,
+    privacy: "public",
+    joinedAt: "2025-01-18",
+    games: {
+      brainrotstar: { hours: 12.4, played: true },
+      gambleking: { hours: 5.8, played: true },
+      chess: { hours: 0, played: false },
+    },
+  },
   friends: [
     { name: "Bob", status: "En ligne", avatar: "B" },
     { name: "Claire", status: "En partie", avatar: "C" },
@@ -114,7 +124,14 @@ const storage = {
 
 const clone = (value) => JSON.parse(JSON.stringify(value));
 const currentPage = () => document.body.dataset.page || "shop";
-const currentUser = () => accounts[session.token];
+const currentUser = () => {
+  const account = accounts[session.token];
+  return {
+    ...account,
+    ...(data?.profile || {}),
+    name: data?.profile?.name || account.name,
+  };
+};
 
 function loadSession() {
   try {
@@ -132,6 +149,18 @@ function loadSession() {
 
   if (session && !data) {
     data = clone(defaults);
+    saveData();
+  }
+
+  if (session && data) {
+    data.profile = {
+      ...clone(defaults.profile),
+      ...(data.profile || {}),
+      games: {
+        ...clone(defaults.profile.games),
+        ...(data.profile?.games || {}),
+      },
+    };
     saveData();
   }
 }

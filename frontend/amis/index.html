@@ -81,6 +81,29 @@
           <div class="friends-list" data-friends-list></div>
         </section>
       </main>
+
+      <div class="invite-modal hidden" data-invite-modal role="dialog" aria-modal="true" aria-labelledby="invite-modal-title">
+        <div class="invite-modal-overlay" data-close-invite></div>
+        <section class="invite-modal-card">
+          <button class="icon-btn invite-modal-close" type="button" data-close-invite aria-label="Fermer">
+            <i data-lucide="x"></i>
+          </button>
+          <div class="eyebrow">Invitation de partie</div>
+          <h2 id="invite-modal-title">Inviter un ami</h2>
+          <p class="muted invite-modal-copy">Choisis le jeu dans lequel tu veux retrouver <b data-invite-friend></b>.</p>
+          <form class="invite-modal-form" data-invite-form>
+            <label for="invite-game-select">Jeu à lancer</label>
+            <div class="invite-select-wrap">
+              <select id="invite-game-select" class="invite-game-select" data-invite-game required></select>
+              <i data-lucide="chevron-down"></i>
+            </div>
+            <div class="invite-modal-actions">
+              <button class="btn" type="button" data-close-invite>Annuler</button>
+              <button class="btn primary" type="submit"><i data-lucide="send"></i><span>Envoyer l'invitation</span></button>
+            </div>
+          </form>
+        </section>
+      </div>
     </template>
 
     <script src="../script.js"></script>

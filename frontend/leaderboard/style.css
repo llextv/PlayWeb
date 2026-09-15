@@ -82,11 +82,26 @@ body {
 }
 
 .sort-select {
+  width: 210px;
   padding: 11px 12px;
   border: 1px solid var(--card-border-strong);
   border-radius: 12px;
   background: var(--card-grad);
   color: var(--text-main);
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.sort-select:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(249, 115, 22, 0.14);
+}
+
+.sort-select option {
+  background: #171717;
+  color: #fff;
 }
 
 .ranking-table-wrap {
@@ -166,20 +181,34 @@ body {
   text-align: center;
 }
 
-.user-rank {
-  font-weight: 700;
-}
-
-.user-rank span {
-  color: #facc15;
-}
-
 .user-pseudo-display {
   color: var(--text-muted);
 }
 
 .user-pseudo-display span {
   color: var(--text-main);
+  font-weight: 800;
+}
+
+.personal-rankings {
+  display: grid;
+  gap: 9px;
+  max-width: 520px;
+  margin: 18px auto;
+}
+
+.personal-ranking-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 11px 13px;
+  border: 1px solid var(--card-border-strong);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.personal-game {
   font-weight: 800;
 }
 
@@ -234,6 +263,11 @@ body {
   cursor: pointer;
 }
 
+.btn-publish svg {
+  width: 17px;
+  height: 17px;
+}
+
 .publish-feedback {
   min-height: 20px;
   margin-top: 10px;
@@ -251,6 +285,10 @@ body {
 
   .sort-controls {
     min-width: 0;
+  }
+
+  .sort-select {
+    width: 100%;
   }
 
   .publish-cta-card {

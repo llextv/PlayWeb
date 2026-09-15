@@ -40,12 +40,11 @@
               <p class="ranking-subtitle">Top joueurs de PlayWeb</p>
             </div>
             <div class="sort-controls">
-              <label for="sort-by">Trier par</label>
-              <select id="sort-by" class="sort-select">
-                <option value="rank">Classement</option>
-                <option value="name">Pseudo</option>
-                <option value="xp">XP</option>
-                <option value="level">Niveau</option>
+              <label for="game-filter">Classement du jeu</label>
+              <select id="game-filter" class="sort-select">
+                <option value="brainrotstar">BrainrotStar</option>
+                <option value="gambleking">GambleKing</option>
+                <option value="chess">Chess</option>
               </select>
             </div>
           </div>
@@ -58,7 +57,6 @@
                   <th>Pseudo</th>
                   <th>Niveau</th>
                   <th>XP</th>
-                  <th>Titre</th>
                 </tr>
               </thead>
               <tbody data-ranking-body></tbody>
@@ -73,35 +71,15 @@
         <section class="publish-card" data-profile-section>
           <h2>Votre profil</h2>
           <div class="user-stats">
-            <p class="user-rank">Vous êtes <span data-user-rank>...</span></p>
             <p class="user-pseudo-display">
               Votre pseudo est : <span data-user-pseudo></span>
             </p>
           </div>
-
-          <form class="publish-form" data-publish-form>
-            <div class="publish-grid">
-              <label>
-                Modifier mon pseudo
-                <input
-                  type="text"
-                  maxlength="24"
-                  placeholder="Nouveau pseudo"
-                  data-publish-name
-                  required
-                />
-              </label>
-            </div>
-            <button type="submit" class="btn-publish">
-              <i data-lucide="edit"></i>
-              <span>Modifier mon pseudo</span>
-            </button>
-          </form>
-          <p
-            class="publish-feedback"
-            data-publish-feedback
-            aria-live="polite"
-          ></p>
+          <div class="personal-rankings" data-personal-rankings></div>
+          <button type="button" class="btn-publish" data-go-profile>
+            <i data-lucide="user-round-cog"></i>
+            <span>Modifier mon profil</span>
+          </button>
         </section>
       </main>
     </template>
