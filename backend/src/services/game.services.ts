@@ -13,6 +13,14 @@ const getGames = async(userId: string) => {
           },
         },
       },
+      include: {
+        _count: {
+          select: {
+            friendshipsSent: { where: { status: "ACCEPTED" } },
+            friendshipsReceived: { where: { status: "ACCEPTED" } },
+          },
+        },
+      },
     });
     const games = await prisma.game.findMany({
       where: {
