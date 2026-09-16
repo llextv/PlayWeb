@@ -72,7 +72,7 @@ model GameUser {
   successes GameUserSuccess[]
 
   joinedAt   DateTime  @default(now())
-  finishedAt DateTime?
+  playedHours String
 
   @@unique([userId, gameId])
   @@index([gameId])
