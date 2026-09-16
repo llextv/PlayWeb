@@ -31,7 +31,7 @@ const getFriends = async(userId: string) => {
       },
     });
 
-    return {success: false, friends};
+    return {success: true, friends};
   }catch(error){
     return {success: false, error};
   }

@@ -9,9 +9,13 @@ const getFriends = async(req: Request, res: Response) => {
     let userId = req.user.id;
     
     let friendService = await friendServices.getFriends(userId);
-    if(!friendService.error) return new Error("Friend Service failed");
+    if(!friendService.success) return res.status(500).json({success: false, error: "Friend Service failed"});
 
-    return res.status(200).json({success: true, friends: friendService.friends})
+    return res.status(200).json({
+      success: true,
+      userId,
+      friends: friendService.friends,
+    })
   }catch(error){
     console.error(error);
     return res.status(500).json({success: false, error: "Internal Server Error"});

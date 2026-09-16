@@ -1,14 +1,19 @@
 (() => {
   document.documentElement.style.visibility = "hidden";
 
-  let session = null;
+  let token = null;
   try {
-    session = JSON.parse(localStorage.getItem("websteam.session.v2") || "null");
+    const storedValue = localStorage.getItem("websteam.session.v2");
+    try {
+      token = JSON.parse(storedValue || "null")?.token;
+    } catch {
+      token = storedValue;
+    }
   } catch {
-    session = null;
+    token = null;
   }
 
-  if (!session?.token) {
+  if (!token) {
     window.location.replace("../index/index.html");
     return;
   }
