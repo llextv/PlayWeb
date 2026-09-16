@@ -1,6 +1,12 @@
 window.pageInit = ({ data, games, setText }) => {
   setText("#page-title", "Collection de succès");
-  const achievements = data.achievements || [];
+  const achievements = [...(data.achievements || [])].sort((left, right) => {
+    if (left.done !== right.done) return left.done ? -1 : 1;
+    if (!left.unlockedAt && !right.unlockedAt) return 0;
+    if (!left.unlockedAt) return 1;
+    if (!right.unlockedAt) return -1;
+    return new Date(right.unlockedAt).getTime() - new Date(left.unlockedAt).getTime();
+  });
   const doneCount = achievements.filter((item) => item.done).length;
   const percent = achievements.length ? Math.round((doneCount / achievements.length) * 100) : 0;
 
@@ -36,7 +42,10 @@ window.pageInit = ({ data, games, setText }) => {
   achievements.forEach((achievement) => {
     const card = document.createElement("article");
     card.className = `card achievement-card ${achievement.done ? "achievement-unlocked" : "achievement-locked"}`;
-    card.innerHTML = `<div class="row"><div class="badge"><i data-lucide="${achievement.icon}"></i></div><span class="tag">${achievement.rare}</span></div><h3>${achievement.name}</h3><div class="muted small">${achievement.game}</div><div class="${achievement.done ? "tag" : "achievement-discover"} achievement-status">${achievement.done ? "✓ Débloqué" : "◌ À découvrir"}</div>`;
+    const unlockedDate = achievement.done && achievement.unlockedAt
+      ? new Date(achievement.unlockedAt).toLocaleDateString("fr-FR")
+      : null;
+    card.innerHTML = `<div class="row"><div class="badge"><i data-lucide="${achievement.icon}"></i></div><span class="tag">${achievement.rare}</span></div><h3>${achievement.name}</h3><div class="muted small">${achievement.game}</div>${unlockedDate ? `<div class="muted small achievement-unlocked-date">Débloqué le ${unlockedDate}</div>` : ""}<div class="${achievement.done ? "tag" : "achievement-discover"} achievement-status">${achievement.done ? "✓ Débloqué" : "◌ À découvrir"}</div>`;
     grid.append(card);
   });
   window.lucide?.createIcons();
