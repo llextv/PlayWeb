@@ -1,4 +1,4 @@
-window.pageInit = ({ data, user, games, setText, toast, icons }) => {
+window.pageInit = ({ data, user, games, setText, toast, icons, api, save }) => {
   setText("#page-title", "Équipage");
   setText("[data-profile-name]", user.name);
   setText("[data-friends-count]", `${data.friends.length} amis`);
@@ -45,7 +45,17 @@ window.pageInit = ({ data, user, games, setText, toast, icons }) => {
     }
   });
 
-  data.friends.forEach((friend) => {
+  const renderFriends = () => {
+    friendsList.innerHTML = "";
+    const friends = data.friends || [];
+    setText("[data-friends-count]", `${friends.length} amis`);
+
+    if (!friends.length) {
+      friendsList.innerHTML = '<p class="friends-empty">Aucun ami accepté pour le moment.</p>';
+      return;
+    }
+
+    friends.forEach((friend) => {
     const row = document.createElement("article");
     row.className = "friend-row";
     row.innerHTML = `
@@ -66,12 +76,61 @@ window.pageInit = ({ data, user, games, setText, toast, icons }) => {
     };
 
     row.querySelector(".remove-friend").onclick = () => {
-      row.remove();
-      toast(`${friend.name} a été retiré de vos amis.`);
+      const remove = api ? api.deleteFriend(friend.id) : Promise.resolve({ ok: true });
+      remove.then((result) => {
+        if (!result.ok) {
+          toast(result.error || "Impossible de retirer cet ami.");
+          return;
+        }
+        data.friends = data.friends.filter((item) => item.id !== friend.id);
+        save();
+        renderFriends();
+        toast(`${friend.name} a été retiré de vos amis.`);
+      });
     };
 
     friendsList.append(row);
-  });
+    });
+  };
+
+  const renderRequests = () => {
+    const requestList = document.querySelector("[data-request-list]");
+    const requests = (data.friendships || []).filter(
+      (friendship) => friendship.status === "PENDING" && friendship.addresseeId === user.id,
+    );
+    requestList.innerHTML = "";
+    if (!requests.length) {
+      requestList.innerHTML = '<p class="friends-empty">Aucune demande en attente</p>';
+      return;
+    }
+
+    requests.forEach((request) => {
+      const name = request.requester?.name || "Joueur";
+      const row = document.createElement("div");
+      row.className = "request-row";
+      row.innerHTML = `<div><b>${name}</b><p class="muted small">Demande d'ami</p></div>
+        <div class="friend-actions"><button class="btn primary" type="button">Accepter</button><button class="btn danger" type="button">Refuser</button></div>`;
+      const [acceptButton, declineButton] = row.querySelectorAll("button");
+      acceptButton.onclick = () => (api ? api.acceptFriend(request.id) : Promise.resolve({ ok: true })).then((result) => {
+        if (!result.ok) return toast(result.error || "Impossible d'accepter la demande.");
+        request.status = "ACCEPTED";
+        data.friends.push({ id: request.id, userId: request.requesterId, name, avatar: name.slice(0, 1).toUpperCase(), status: "Hors ligne" });
+        save();
+        renderRequests();
+        renderFriends();
+      });
+      declineButton.onclick = () => (api ? api.declineFriend(request.id) : Promise.resolve({ ok: true })).then((result) => {
+        if (!result.ok) return toast(result.error || "Impossible de refuser la demande.");
+        request.status = "DECLINED";
+        save();
+        renderRequests();
+      });
+      requestList.append(row);
+    });
+  };
+
+  renderFriends();
+  renderRequests();
 
   document.querySelector("[data-invite-button]").onclick = () => {
     const input = document.querySelector("[data-invite-input]");
@@ -82,11 +141,17 @@ window.pageInit = ({ data, user, games, setText, toast, icons }) => {
       return;
     }
 
-    toast(`Demande envoyée à ${name}.`);
-    input.value = "";
+    (api ? api.askFriend(name) : Promise.resolve({ ok: true })).then((result) => {
+      if (!result.ok) {
+        toast(result.error || "Impossible d'envoyer la demande.");
+        return;
+      }
+      toast("Demande envoyée.");
+      input.value = "";
+    });
   };
 
-  document.querySelector("[data-profile-form]").onsubmit = (event) => {
+  document.querySelector("[data-profile-form]").onsubmit = async (event) => {
     event.preventDefault();
     const input = document.querySelector("[data-profile-input]");
     const feedback = document.querySelector("[data-profile-feedback]");
@@ -98,9 +163,24 @@ window.pageInit = ({ data, user, games, setText, toast, icons }) => {
       return;
     }
 
+    if (!api) {
+      feedback.textContent = "Le backend est indisponible.";
+      feedback.style.color = "#fda4af";
+      return;
+    }
+
+    const result = await api.updateName(name);
+    if (!result.ok || !result.user) {
+      feedback.textContent = result.error || "Impossible de modifier le pseudo.";
+      feedback.style.color = "#fda4af";
+      return;
+    }
+
+    user.name = result.user.name;
+    data.profile.name = result.user.name;
     feedback.textContent = "Pseudo modifié avec succès.";
     feedback.style.color = "#86efac";
-    setText("[data-profile-name]", name);
+    setText("[data-profile-name]", result.user.name);
     input.value = "";
   };
 

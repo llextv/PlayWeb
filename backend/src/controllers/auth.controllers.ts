@@ -66,4 +66,29 @@ const updateAvatar = async (req: Request, res: Response) => {
   return res.status(200).json({ success: true, user: service.user });
 };
 
-export default {me, register, updateAvatar}
+const updateName = async (req: Request, res: Response) => {
+  const userId = req.user?.id;
+  const result = z.object({
+    name: z.string().trim().min(3).max(24),
+  }).safeParse(req.body);
+
+  if (!userId) {
+    return res.status(401).json({ success: false, error: "Unauthorized" });
+  }
+
+  if (!result.success) {
+    return res.status(400).json({
+      success: false,
+      error: "name must contain between 3 and 24 characters",
+    });
+  }
+
+  const service = await authServices.updateName(userId, result.data.name);
+  if (!service.success) {
+    return res.status(500).json({ success: false, error: "Unable to update name" });
+  }
+
+  return res.status(200).json({ success: true, user: service.user });
+};
+
+export default {me, register, updateAvatar, updateName}

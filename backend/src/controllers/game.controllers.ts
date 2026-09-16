@@ -8,7 +8,12 @@ const getGames = async(req: Request, res: Response) => {
     let games = await gameServices.getGames(userId);
     if(!games.success) return new Error("Game Controller failed");
 
-    return {success: true, games}
+    const gameUsers = games.games || [];
+    return res.status(200).json({
+      success: true,
+      user: games.user || null,
+      games: gameUsers,
+    });
   }catch(error){
     console.error(error);
     return res.status(500).json({sucess: false, error: "Internal Server Error"});

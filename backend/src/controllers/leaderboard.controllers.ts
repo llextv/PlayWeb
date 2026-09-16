@@ -10,7 +10,7 @@ const getUserPlacement = async(req: Request, res: Response) => {
     let result = await leaderboardServices.getUserPlacement(userId);
     if(!result.success) return new Error("GetUserPlacement Failed");
 
-    return res.status(200).json({success: true, result})
+    return res.status(200).json({success: true, result: result.result})
   }catch(error){
     console.error(error);
     return res.status(500).json({success: false, error: "Internal Server Error"});
@@ -23,7 +23,7 @@ const getClassement = async(req: Request, res: Response) => {
     let result = await leaderboardServices.getPlacement(gameID);
     if(!result.success) return new Error("GetPlacement Failed");
 
-    return res.status(200).json({success: true, result})
+    return res.status(200).json({success: true, result: result.result})
   }catch(error){
     console.error(error);
     return res.status(500).json({success: false, error: "Internal Server Error"});

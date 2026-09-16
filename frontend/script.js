@@ -160,20 +160,41 @@ async function apiRequestWithToken(token, path, options = {}) {
 const api = {
   enabled: () => isBackendToken(session?.token),
   getMe: () => apiRequest("/auth/me"),
+  getHome: () => apiRequest("/home"),
+  getGames: () => apiRequest("/game"),
+  getFriends: () => apiRequest("/friends"),
+  askFriend: (friendUserId) => apiRequest(`/friends/${encodeURIComponent(friendUserId)}`, { method: "POST" }),
+  acceptFriend: (friendId) => apiRequest(`/friends/accept/${encodeURIComponent(friendId)}`, { method: "POST" }),
+  declineFriend: (friendId) => apiRequest(`/friends/decline/${encodeURIComponent(friendId)}`, { method: "POST" }),
+  deleteFriend: (friendId) => apiRequest(`/friends/${encodeURIComponent(friendId)}`, { method: "DELETE" }),
+  getRanking: (gameId) => apiRequest(`/ranking/${encodeURIComponent(gameId)}`),
+  getUserRankings: () => apiRequest("/ranking"),
+  getSuccesses: () => apiRequest("/success"),
+  getUserSuccesses: () => apiRequest("/success/user"),
   updateAvatar: (avatarUrl) => apiRequest("/auth/me/avatar", {
     method: "PATCH",
     body: JSON.stringify({ avatarUrl }),
+  }),
+  updateName: (name) => apiRequest("/auth/me/name", {
+    method: "PATCH",
+    body: JSON.stringify({ name }),
   }),
   register: () => apiRequestWithToken(null, "/auth/register", { method: "POST" }),
 };
 
 function loadSession() {
   try {
-    session = JSON.parse(storage.get(SESSION_KEY) || "null");
-    data = JSON.parse(storage.get(DATA_KEY) || "null");
+    const storedValue = storage.get(SESSION_KEY);
+    let storedToken = storedValue;
+    try {
+      const legacySession = JSON.parse(storedValue || "null");
+      if (legacySession?.token) storedToken = legacySession.token;
+    } catch {
+      // The current format stores only the token.
+    }
+    session = storedToken ? { token: storedToken, createdAt: Date.now() } : null;
   } catch {
     session = null;
-    data = null;
   }
 
   if (session && !accounts[session.token] && !isBackendToken(session.token)) {
@@ -181,27 +202,119 @@ function loadSession() {
     session = null;
   }
 
-  if (session && !data) {
-    data = clone(defaults);
-    saveData();
-  }
+  storage.remove(DATA_KEY);
 
-  if (session && data) {
-    data.profile = {
-      ...clone(defaults.profile),
-      ...(data.profile || {}),
-      games: {
-        ...clone(defaults.profile.games),
-        ...(data.profile?.games || {}),
-      },
-    };
-    saveData();
+  if (session) {
+    storage.set(SESSION_KEY, session.token);
+    data = clone(defaults);
   }
 }
 
 function saveData() {
-  storage.set(SESSION_KEY, JSON.stringify(session));
-  storage.set(DATA_KEY, JSON.stringify(data));
+  // Application data is fetched from the API and kept in memory only.
+}
+
+function mergeRemoteData(remote) {
+  if (!remote || !data) return;
+
+  if (remote.user) {
+    session.userId = remote.user.id;
+    data.profile = {
+      ...data.profile,
+      id: remote.user.id,
+      name: remote.user.name || data.profile.name,
+      avatarUrl: remote.user.avatarUrl || null,
+      joinedAt: remote.user.createdAt || data.profile.joinedAt,
+    };
+  }
+
+  if (Array.isArray(remote.games) && remote.games.length) {
+    data.profile.games = {
+      ...data.profile.games,
+      ...Object.fromEntries(remote.games.map((gameUser) => [
+        gameUser.gameId,
+        {
+          hours: Number(gameUser.playedHours || 0),
+          played: true,
+        },
+      ])),
+    };
+  }
+
+  if (Array.isArray(remote.friends)) {
+    data.friendships = remote.friends;
+    if (remote.userId) {
+      session.userId = remote.userId;
+      data.profile.id = remote.userId;
+    }
+    const currentUserId = remote.user?.id || remote.userId || session.userId;
+    data.friends = remote.friends
+      .filter((friendship) => friendship.status === "ACCEPTED")
+      .map((friendship) => {
+        const friend = friendship.requesterId === currentUserId
+          ? friendship.addressee
+          : friendship.requester;
+        return {
+          id: friendship.id,
+          userId: friendship.requesterId === currentUserId
+            ? friendship.addresseeId
+            : friendship.requesterId,
+          name: friend?.name || "Joueur",
+          avatar: friend?.name?.slice(0, 1).toUpperCase() || "?",
+          avatarUrl: friend?.avatarUrl || null,
+          status: "Hors ligne",
+        };
+      });
+  }
+
+  if (Array.isArray(remote.achievements)) {
+    data.achievements = remote.achievements;
+  }
+
+}
+
+async function hydrateRemoteData(page) {
+  if (!api.enabled()) return;
+
+  if (page === "shop") {
+    const home = await api.getHome();
+    if (Array.isArray(home.games) && home.games.length) {
+      games.splice(0, games.length, ...home.games.map((game) => ({
+        id: game.id,
+        slug: game.slug,
+        name: game.name,
+        genre: "PlayWeb",
+        description: game.description || "Découvrez ce jeu PlayWeb.",
+      })));
+    }
+    return;
+  }
+
+  if (page === "friends") {
+    const friends = await api.getFriends();
+    mergeRemoteData({ friends: friends.friends, userId: friends.userId });
+    return;
+  }
+
+  if (page === "achievements") {
+    const successes = await api.getUserSuccesses();
+    mergeRemoteData({
+      achievements: (successes.result || []).map((item) => ({
+        id: item.success?.id || item.successId,
+        name: item.success?.title || "Succès",
+        game: item.success?.game?.name || item.success?.gameId || "PlayWeb",
+        icon: "trophy",
+        rare: item.success?.rarity || "COMMON",
+        done: true,
+      })),
+    });
+    return;
+  }
+
+  if (page === "profile") {
+    const gameUsers = await api.getGames();
+    mergeRemoteData({ user: gameUsers.user, games: gameUsers.games });
+  }
 }
 
 function setText(selector, value, root = document) {
@@ -225,7 +338,6 @@ function logout() {
   session = null;
   data = null;
   storage.remove(SESSION_KEY);
-  storage.remove(DATA_KEY);
   showLogin();
 }
 
@@ -266,6 +378,7 @@ async function showLogin() {
 
   const openSession = (token, user = null) => {
     session = { token, createdAt: Date.now() };
+    storage.set(SESSION_KEY, token);
     data = {
       ...clone(defaults),
       profile: {
@@ -274,7 +387,6 @@ async function showLogin() {
         avatarUrl: user?.avatarUrl || null,
       },
     };
-    saveData();
     renderApp();
   };
 
@@ -380,12 +492,13 @@ function renderShell() {
   icons();
 }
 
-function renderApp() {
+async function renderApp() {
   if (!session) {
     showLogin();
     return;
   }
 
+  await hydrateRemoteData(currentPage());
   renderShell();
   const pageTemplate = document.querySelector("#page-template");
   if (pageTemplate) {

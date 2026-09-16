@@ -2,8 +2,13 @@ window.pageInit = ({ user, data, games, setText, toast, save, icons, api }) => {
   setText("#page-title", "Votre profil");
 
   const profile = data.profile || {};
-  const token = window.localStorage?.getItem?.("websteam.session.v2");
-  const sessionToken = token ? JSON.parse(token).token : "demo-token-alice";
+  const storedToken = window.localStorage?.getItem?.("websteam.session.v2");
+  let sessionToken = storedToken || "demo-token-alice";
+  try {
+    sessionToken = JSON.parse(storedToken).token;
+  } catch {
+    // Current storage format contains the token directly.
+  }
   const achievements = data.achievements || [];
   const unlocked = achievements.filter((item) => item.done).length;
   const playedGames = games.filter((game) => profile.games?.[game.id]?.played);
@@ -26,16 +31,6 @@ window.pageInit = ({ user, data, games, setText, toast, save, icons, api }) => {
   setText("[data-hours-count]", `${totalHours.toFixed(1)} h`);
   setText("[data-games-count]", `${playedGames.length} / ${games.length}`);
   document.querySelector("[data-profile-input]").value = user.name;
-
-  if (api) {
-    api.getMe().then((result) => {
-      if (!result.ok || !result.user) return;
-      user.avatarUrl = result.user.avatarUrl;
-      data.profile.avatarUrl = result.user.avatarUrl;
-      save();
-      renderAvatar(user.avatarUrl);
-    });
-  }
 
   const percent = achievements.length ? Math.round((unlocked / achievements.length) * 100) : 0;
   setText("[data-achievement-percent]", `${percent}%`);
@@ -61,7 +56,7 @@ window.pageInit = ({ user, data, games, setText, toast, save, icons, api }) => {
   };
   updatePrivacy();
 
-  document.querySelector("[data-profile-form]").onsubmit = (event) => {
+  document.querySelector("[data-profile-form]").onsubmit = async (event) => {
     event.preventDefault();
     const input = document.querySelector("[data-profile-input]");
     const name = input.value.trim();
@@ -71,11 +66,24 @@ window.pageInit = ({ user, data, games, setText, toast, save, icons, api }) => {
       feedback.className = "form-feedback error";
       return;
     }
-    profile.name = name;
+    if (!api) {
+      feedback.textContent = "Le backend est indisponible.";
+      feedback.className = "form-feedback error";
+      return;
+    }
+
+    const result = await api.updateName(name);
+    if (!result.ok || !result.user) {
+      feedback.textContent = result.error || "Impossible de modifier le pseudo.";
+      feedback.className = "form-feedback error";
+      return;
+    }
+
+    profile.name = result.user.name;
+    user.name = result.user.name;
     data.profile = profile;
-    save();
-    setText("[data-profile-name]", name);
-    document.querySelector(".user-mini b").textContent = name;
+    setText("[data-profile-name]", result.user.name);
+    document.querySelector(".user-mini b").textContent = result.user.name;
     feedback.textContent = "Pseudo modifié avec succès.";
     feedback.className = "form-feedback success";
     toast("Ton profil a été mis à jour.");
@@ -83,8 +91,6 @@ window.pageInit = ({ user, data, games, setText, toast, save, icons, api }) => {
 
   privacySelect.onchange = () => {
     profile.privacy = privacySelect.value;
-    data.profile = profile;
-    save();
     updatePrivacy();
     toast(profile.privacy === "public" ? "Profil visible par tous." : "Profil maintenant privé.");
   };
@@ -121,6 +127,21 @@ window.pageInit = ({ user, data, games, setText, toast, save, icons, api }) => {
       button.classList.add("is-clicked");
       window.setTimeout(() => button.classList.remove("is-clicked"), 350);
     });
+    if (api) {
+      const avatarUrl = window.prompt("URL de ton avatar (laisser vide pour supprimer) :", user.avatarUrl || "");
+      if (avatarUrl === null) return;
+      api.updateAvatar(avatarUrl.trim()).then((result) => {
+        if (!result.ok) {
+          toast(result.error || "Impossible de mettre à jour l'avatar.");
+          return;
+        }
+        user.avatarUrl = result.user?.avatarUrl || null;
+        data.profile.avatarUrl = user.avatarUrl;
+        save();
+        renderAvatar(user.avatarUrl);
+        toast("Avatar mis à jour.");
+      });
+    }
   };
 
   document.querySelector("[data-delete-account]").onclick = () => {

@@ -13,8 +13,20 @@ if (!process.env.JWT_SECRET) {
   console.warn("JWT_SECRET is not configured; token generation will fail.");
 }
 
+const allowedOrigins = process.env.FRONTEND_ORIGIN
+  ?.split(",")
+  .map((origin) => origin.trim()) || [];
+
 app.use(cors({
-  origin: process.env.FRONTEND_ORIGIN?.split(",").map((origin) => origin.trim()) || true,
+  origin: (origin, callback) => {
+    // Browsers send "null" when the frontend is opened directly as a file:// URL.
+    if (!origin || origin === "null" || allowedOrigins.includes(origin)) {
+      callback(null, true);
+      return;
+    }
+
+    callback(new Error(`Origin not allowed by CORS: ${origin}`));
+  },
 }));
 app.use(express.json());
 app.use("/api/v1/", routes.router);

@@ -12,7 +12,16 @@ const getAllSuccess = async() => {
 
 const getUserSuccess = async(userId: string) => {
   try{
-    let result = await prisma.gameUserSuccess.findMany({where: {gameUserId:userId}, include: {success: true}});
+    let result = await prisma.gameUserSuccess.findMany({
+      where: { gameUserId: userId },
+      include: {
+        success: {
+          include: {
+            game: true,
+          },
+        },
+      },
+    });
     if(!result) return {success: false}
     return {success: true, result}
   }catch(error){

@@ -2,11 +2,21 @@ import { prisma } from "../config/prisma.js";
 
 const getGames = async(userId: string) => {
   try{
-    let games = await prisma.gameUser.findUnique({
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      omit: { token: true },
+    });
+    let games = await prisma.gameUser.findMany({
       where: {
-        id: userId
+        userId
       },
       include: {
+        user: {
+          omit: {
+            token: true,
+          },
+        },
+        game: true,
         successes: {
           include: {
             success: true
@@ -14,7 +24,7 @@ const getGames = async(userId: string) => {
         }
       }
     });
-    return {success: true, games}
+    return {success: true, user, games}
   }catch(error){
     console.error("Game Failed failed:", error);
     return {success: false, error}

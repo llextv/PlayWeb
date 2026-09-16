@@ -62,4 +62,19 @@ const updateAvatar = async (userId: string, avatarUrl: string | null) => {
   }
 };
 
-export default {getMe, register, updateAvatar}
+const updateName = async (userId: string, name: string) => {
+  try {
+    const user = await prisma.user.update({
+      where: { id: userId },
+      data: { name },
+      omit: { token: true },
+    });
+
+    return { success: true, user };
+  } catch (error) {
+    console.error("Auth name update failed:", error);
+    return { success: false, error };
+  }
+};
+
+export default {getMe, register, updateAvatar, updateName}

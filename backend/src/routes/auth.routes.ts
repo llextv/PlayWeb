@@ -9,5 +9,6 @@ router.post('/register', authControllers.register);
 router.use(authenticate);
 router.get('/me', authControllers.me);
 router.patch('/me/avatar', authControllers.updateAvatar);
+router.patch('/me/name', authControllers.updateName);
 
 export default {router};
