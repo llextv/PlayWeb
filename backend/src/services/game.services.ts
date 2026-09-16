@@ -14,6 +14,7 @@ const getGames = async(userId: string) => {
         },
       },
     });
+    
     let games = await prisma.gameUser.findMany({
       where: {
         userId
