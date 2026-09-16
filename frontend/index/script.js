@@ -1,4 +1,4 @@
-window.pageInit = ({ games, setText }) => {
+window.pageInit = ({ games, setText, session }) => {
   setText("#page-title", "Découvrir");
   setText("[data-games-count]", `${games.length} jeux`);
   const grid = document.querySelector(".games-grid");
@@ -16,5 +16,11 @@ window.pageInit = ({ games, setText }) => {
         <button class="btn primary game-play" type="button">Jouer</button>
       </div>`;
     grid.append(card);
+    const launchUrl = game.launchUrl;
+    if (launchUrl) {
+      card.querySelector(".game-play").onclick = () => {
+        window.location.href = launchUrl.replace("[token de la personne]", session.token);
+      };
+    }
   });
 };

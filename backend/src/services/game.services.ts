@@ -16,7 +16,11 @@ const getGames = async(userId: string) => {
             token: true,
           },
         },
-        game: true,
+        game: {
+          include: {
+            successes: true,
+          },
+        },
         successes: {
           include: {
             success: true

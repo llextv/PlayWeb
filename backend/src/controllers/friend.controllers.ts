@@ -1,6 +1,7 @@
 import { Request, Response } from "express";
 import friendServices from "../services/friend.services.js";
 import {z} from "zod";
+import authServices from "../services/auth.services.js";
 
 const parseId = z.string().min(5).max(255);
 
@@ -10,10 +11,12 @@ const getFriends = async(req: Request, res: Response) => {
     
     let friendService = await friendServices.getFriends(userId);
     if(!friendService.success) return res.status(500).json({success: false, error: "Friend Service failed"});
+    const user = await authServices.getMe(userId);
 
     return res.status(200).json({
       success: true,
       userId,
+      user: user.user || null,
       friends: friendService.friends,
     })
   }catch(error){

@@ -1,4 +1,4 @@
-window.pageInit = ({ user, games, setText, toast, icons, api }) => {
+window.pageInit = ({ user, games, setText, toast, icons, api, initialPageData }) => {
   setText("#page-title", "Classement");
 
   const rankingBody = document.querySelector("[data-ranking-body]");
@@ -43,7 +43,9 @@ window.pageInit = ({ user, games, setText, toast, icons, api }) => {
 
   const loadRanking = async () => {
     const game = games.find((item) => item.id === gameFilter.value);
-    const result = api ? await api.getRanking(gameFilter.value) : { ok: false };
+    const result = initialPageData?.ranking?.result
+      ? initialPageData.ranking
+      : api ? await api.getRanking(gameFilter.value) : { ok: false };
     if (result.ok && result.result) {
       renderRows(result.result.scores, game?.name || "ce jeu");
       return;

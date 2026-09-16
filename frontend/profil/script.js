@@ -35,6 +35,7 @@ window.pageInit = ({ user, data, games, setText, toast, save, icons, api }) => {
   const percent = achievements.length ? Math.round((unlocked / achievements.length) * 100) : 0;
   setText("[data-achievement-percent]", `${percent}%`);
   setText("[data-achievement-title]", unlocked === achievements.length ? "Collection terminée !" : "Encore quelques défis");
+  document.querySelector(".achievement-ring").style.setProperty("--achievement-progress", `${percent}%`);
   document.querySelector("[data-achievement-progress]").style.width = `${percent}%`;
 
   const activity = document.querySelector("[data-game-activity]");
@@ -46,7 +47,7 @@ window.pageInit = ({ user, data, games, setText, toast, save, icons, api }) => {
       <div class="game-mark ${game.id}">${game.name.slice(0, 1)}</div>
       <div class="grow"><div class="game-row-title"><b>${game.name}</b><span class="${stats.played ? "tag" : "muted"}">${stats.played ? "Joué" : "Jamais joué"}</span></div>
       <div class="activity-track"><i style="width: ${Math.min(100, stats.hours * 4)}%"></i></div></div>
-      <strong class="game-hours">${stats.played ? `${Number(stats.hours).toFixed(1)} h` : "—"}</strong>`;
+      <strong class="game-hours">${Number(stats.hours).toFixed(1)} h</strong>`;
     activity.append(row);
   });
 

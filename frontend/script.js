@@ -61,42 +61,18 @@ const defaults = {
     privacy: "public",
     joinedAt: "2025-01-18",
     games: {
-      brainrotstar: { hours: 12.4, played: true },
-      gambleking: { hours: 5.8, played: true },
+      brainrotstar: { hours: 0, played: false },
+      gambleking: { hours: 0, played: false },
       chess: { hours: 0, played: false },
     },
   },
-  friends: [
-    { name: "Bob", status: "En ligne", avatar: "B" },
-    { name: "Claire", status: "En partie", avatar: "C" },
-  ],
-  achievements: [
-    {
-      name: "Premier tour",
-      game: "BrainrotStar",
-      icon: "zap",
-      rare: "Commun",
-      done: true,
-    },
-    {
-      name: "Ligne parfaite",
-      game: "BrainrotStar",
-      icon: "target",
-      rare: "Rare",
-      done: true,
-    },
-    {
-      name: "Pas de retour",
-      game: "GambleKing",
-      icon: "skull",
-      rare: "Légendaire",
-      done: false,
-    },
-  ],
+  friends: [],
+  achievements: [],
 };
 
 let session = null;
 let data = null;
+let initialPageData = {};
 const memoryStorage = {};
 
 const storage = {
@@ -130,6 +106,7 @@ const currentUser = () => {
   return {
     ...(account || {}),
     ...(data?.profile || {}),
+    avatar: data?.profile?.avatar || account?.avatar || "J",
     name: data?.profile?.name || account?.name || "Joueur",
   };
 };
@@ -235,7 +212,7 @@ function mergeRemoteData(remote) {
         gameUser.gameId,
         {
           hours: Number(gameUser.playedHours || 0),
-          played: true,
+          played: Number(gameUser.playedHours || 0) > 0,
         },
       ])),
     };
@@ -278,6 +255,7 @@ async function hydrateRemoteData(page) {
 
   if (page === "shop") {
     const home = await api.getHome();
+    mergeRemoteData({ user: home.user });
     if (Array.isArray(home.games) && home.games.length) {
       games.splice(0, games.length, ...home.games.map((game) => ({
         id: game.id,
@@ -285,6 +263,7 @@ async function hydrateRemoteData(page) {
         name: game.name,
         genre: "PlayWeb",
         description: game.description || "Découvrez ce jeu PlayWeb.",
+        launchUrl: game.launchUrl || null,
       })));
     }
     return;
@@ -292,13 +271,14 @@ async function hydrateRemoteData(page) {
 
   if (page === "friends") {
     const friends = await api.getFriends();
-    mergeRemoteData({ friends: friends.friends, userId: friends.userId });
+    mergeRemoteData({ user: friends.user, friends: friends.friends, userId: friends.userId });
     return;
   }
 
   if (page === "achievements") {
     const successes = await api.getUserSuccesses();
     mergeRemoteData({
+      user: successes.user,
       achievements: (successes.result || []).map((item) => ({
         id: item.success?.id || item.successId,
         name: item.success?.title || "Succès",
@@ -313,7 +293,48 @@ async function hydrateRemoteData(page) {
 
   if (page === "profile") {
     const gameUsers = await api.getGames();
-    mergeRemoteData({ user: gameUsers.user, games: gameUsers.games });
+    if (Array.isArray(gameUsers.games) && gameUsers.games.length) {
+      games.splice(0, games.length, ...gameUsers.games
+        .filter((gameUser) => gameUser.game)
+        .map((gameUser) => ({
+          id: gameUser.game.id,
+          slug: gameUser.game.slug,
+          name: gameUser.game.name,
+          genre: "PlayWeb",
+          description: gameUser.game.description || "Découvrez ce jeu PlayWeb.",
+          launchUrl: gameUser.game.launchUrl || null,
+        })));
+    }
+    const remoteAchievements = (gameUsers.games || []).flatMap((gameUser) => {
+      const earnedIds = new Set((gameUser.successes || []).map((item) => item.successId));
+      return (gameUser.game?.successes || []).map((success) => ({
+        id: success.id,
+        name: success.title,
+        game: gameUser.game.name,
+        icon: "trophy",
+        rare: success.rarity || "COMMON",
+        done: earnedIds.has(success.id),
+      }));
+    });
+    mergeRemoteData({
+      user: gameUsers.user,
+      games: gameUsers.games,
+      achievements: remoteAchievements,
+    });
+    return;
+  }
+
+  if (page === "leaderboard") {
+    const game = games[0];
+    const ranking = game ? await api.getRanking(game.id) : null;
+    initialPageData.ranking = ranking;
+    mergeRemoteData({ user: ranking?.user });
+    return;
+  }
+
+  if (page === "updates") {
+    const me = await api.getMe();
+    mergeRemoteData({ user: me.user });
   }
 }
 
@@ -468,7 +489,7 @@ function renderShell() {
         <div class="side-foot">
           <div class="user-mini">
             <div class="avatar">${currentUser().avatar}</div>
-            <div class="grow"><b>${currentUser().name}</b><br><span class="small muted">Niveau ${currentUser().level}</span></div>
+            <div class="grow"><b>${currentUser().name}</b></div>
             <button class="btn danger" id="logout" title="Déconnexion"><i data-lucide="log-out"></i></button>
           </div>
         </div>
@@ -476,7 +497,7 @@ function renderShell() {
       <main class="main" id="content">
         <header class="topbar">
           <h1 id="page-title"></h1>
-          <button class="btn" id="quick-profile">${currentUser().avatar} ${currentUser().name}</button>
+          <button class="btn" id="quick-profile">${currentUser().name}</button>
         </header>
         <div id="page-content"></div>
       </main>
@@ -515,6 +536,8 @@ async function renderApp() {
     save: saveData,
     icons,
     api: api.enabled() ? api : null,
+    session,
+    initialPageData,
   });
 }
 
