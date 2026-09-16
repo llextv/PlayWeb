@@ -32,12 +32,7 @@ const me = async (req: Request, res: Response) => {
 const register = async(req: Request, res: Response) => {
   try{
     let service = await authServices.register();
-    if(!service.success || !service.token) {
-      return res.status(503).json({
-        success: false,
-        error: "Authentication backend unavailable: configure DATABASE_URL and JWT_SECRET, then start MySQL.",
-      });
-    }
+    if(!service.success || !service.token) return new Error("Service error");
 
     return res.status(200).json({success: true, token: service.token});
   }catch(error){

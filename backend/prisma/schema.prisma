@@ -16,6 +16,7 @@ model User {
   id           String     @id @default(uuid())
   token        String     @unique
   avatarUrl    String?
+  name         String?
   status       UserStatus @default(OFFLINE)
 
   createdAt DateTime @default(now())
