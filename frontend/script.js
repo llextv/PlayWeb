@@ -260,9 +260,9 @@ function mergeRemoteData(remote) {
       data.profile.id = remote.userId;
     }
     const currentUserId = remote.user?.id || remote.userId || session.userId;
-    data.friends = remote.friends
-      .filter((friendship) => friendship.status === "ACCEPTED")
-      .map((friendship) => {
+    const acceptedFriendships = remote.friends.filter((friendship) => friendship.status === "ACCEPTED");
+    data.profile.friendsCount = acceptedFriendships.length;
+    data.friends = acceptedFriendships.map((friendship) => {
         const friend = friendship.requesterId === currentUserId
           ? friendship.addressee
           : friendship.requester;
@@ -362,7 +362,11 @@ async function hydrateRemoteData(page) {
   }
 
   if (page === "profile") {
-    const [gameUsers, home] = await Promise.all([api.getGames(), api.getHome()]);
+    const [gameUsers, home, friends] = await Promise.all([
+      api.getGames(),
+      api.getHome(),
+      api.getFriends(),
+    ]);
     if (Array.isArray(home.games) && home.games.length) {
       games.splice(0, games.length, ...home.games.map((game) => ({
           id: game.id,
@@ -387,6 +391,8 @@ async function hydrateRemoteData(page) {
     mergeRemoteData({
       user: gameUsers.user,
       games: gameUsers.games,
+      friends: friends.friends,
+      userId: friends.userId,
       achievements: remoteAchievements,
     });
     return;
@@ -415,6 +421,15 @@ function setText(selector, value, root = document) {
 
 function icons() {
   if (window.lucide) window.lucide.createIcons();
+}
+
+function renderMiniAvatar(user = currentUser()) {
+  const avatar = document.querySelector("[data-user-avatar]");
+  if (!avatar) return;
+  const avatarUrl = user.avatarUrl || "";
+  avatar.textContent = avatarUrl ? "" : user.avatar || "J";
+  avatar.style.backgroundImage = avatarUrl ? `url("${avatarUrl}")` : "";
+  avatar.classList.toggle("has-image", Boolean(avatarUrl));
 }
 
 function toast(message) {
@@ -585,7 +600,7 @@ function renderShell() {
         </nav>
         <div class="side-foot">
           <div class="user-mini">
-            <div class="avatar">${currentUser().avatar}</div>
+            <div class="avatar" data-user-avatar>${currentUser().avatar}</div>
             <div class="grow"><b>${currentUser().name}</b></div>
             <button class="btn danger" id="logout" title="Déconnexion"><i data-lucide="log-out"></i></button>
           </div>
@@ -607,6 +622,7 @@ function renderShell() {
   document.querySelector("#quick-profile").onclick = () => {
     window.location.href = "../profil/index.html";
   };
+  renderMiniAvatar();
   icons();
 }
 

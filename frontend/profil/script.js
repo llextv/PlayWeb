@@ -40,10 +40,17 @@ window.pageInit = ({ user, data, games, setText, toast, save, icons, api }) => {
 
   const renderAvatar = (avatarUrl, fallback = user.avatar) => {
     const avatar = document.querySelector("[data-profile-avatar]");
-    if (!avatar) return;
-    avatar.textContent = avatarUrl ? "" : fallback;
-    avatar.style.backgroundImage = avatarUrl ? `url("${avatarUrl}")` : "";
-    avatar.classList.toggle("has-image", Boolean(avatarUrl));
+    if (avatar) {
+      avatar.textContent = avatarUrl ? "" : fallback;
+      avatar.style.backgroundImage = avatarUrl ? `url("${avatarUrl}")` : "";
+      avatar.classList.toggle("has-image", Boolean(avatarUrl));
+    }
+    const miniAvatar = document.querySelector("[data-user-avatar]");
+    if (miniAvatar) {
+      miniAvatar.textContent = avatarUrl ? "" : fallback;
+      miniAvatar.style.backgroundImage = avatarUrl ? `url("${avatarUrl}")` : "";
+      miniAvatar.classList.toggle("has-image", Boolean(avatarUrl));
+    }
   };
 
   renderAvatar(user.avatarUrl);
