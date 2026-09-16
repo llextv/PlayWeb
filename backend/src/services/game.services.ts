@@ -15,10 +15,10 @@ const getGames = async(userId: string) => {
           include: {
             _count: {
               select: {
-                friendshipsReceived: true,
-                friendshipsSent: true
-              }
-            }
+                friendshipsSent: { where: { status: "ACCEPTED" } },
+                friendshipsReceived: { where: { status: "ACCEPTED" } },
+              },
+            },
           },
           omit: {
             token: true,
