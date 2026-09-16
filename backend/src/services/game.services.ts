@@ -14,42 +14,30 @@ const getGames = async(userId: string) => {
         },
       },
     });
-    const games = await prisma.game.findMany({
+    
+    let games = await prisma.gameUser.findMany({
       where: {
-        isActive: true,
+        userId
       },
       include: {
-        successes: true,
-        gameUsers: {
-          where: { userId },
-          include: {
-            successes: {
-              include: {
-                success: true,
-              },
-            },
+        user: {
+          omit: {
+            token: true,
           },
         },
-      },
+        game: {
+          include: {
+            successes: true,
+          },
+        },
+        successes: {
+          include: {
+            success: true
+          }
+        }
+      }
     });
-
-    const gameUsers = games.map(({ gameUsers, ...game }) => {
-      const gameUser = gameUsers[0];
-
-      return {
-        id: gameUser?.id || `${userId}-${game.id}`,
-        userId,
-        gameId: game.id,
-        status: gameUser?.status || "JOINED",
-        stats: gameUser?.stats || null,
-        joinedAt: gameUser?.joinedAt || null,
-        playedHours: gameUser?.playedHours || "0",
-        successes: gameUser?.successes || [],
-        game,
-      };
-    });
-
-    return {success: true, user, games: gameUsers}
+    return {success: true, user, games}
   }catch(error){
     console.error("Game Failed failed:", error);
     return {success: false, error}
