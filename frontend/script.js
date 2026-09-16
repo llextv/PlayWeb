@@ -234,6 +234,9 @@ function mergeRemoteData(remote) {
       avatarUrl: remote.user.avatarUrl || null,
       joinedAt: remote.user.createdAt || data.profile.joinedAt,
       privacy: remote.user.isPublic === false ? "private" : "public",
+      friendsCount: remote.user._count
+        ? Number(remote.user._count.friendshipsSent || 0) + Number(remote.user._count.friendshipsReceived || 0)
+        : data.profile.friendsCount,
     };
   }
 
@@ -308,33 +311,66 @@ async function hydrateRemoteData(page) {
   }
 
   if (page === "achievements") {
-    const successes = await api.getUserSuccesses();
+    const [allSuccesses, userSuccesses, gameUsers, home] = await Promise.all([
+      api.getSuccesses(),
+      api.getUserSuccesses(),
+      api.getGames(),
+      api.getHome(),
+    ]);
+    if (Array.isArray(home.games) && home.games.length) {
+      games.splice(0, games.length, ...home.games.map((game) => ({
+        id: game.id,
+        slug: game.slug,
+        name: game.name,
+        genre: "PlayWeb",
+        description: game.description || "Découvrez ce jeu PlayWeb.",
+        launchUrl: game.launchUrl || null,
+      })));
+    }
+    const gameNames = new Map(games.map((game) => [game.id, game.name]));
+    const unlockedDates = new Map((userSuccesses.result || []).map((item) => [
+      item.success?.id || item.successId,
+      item.earnedAt,
+    ]));
+    (gameUsers.games || []).forEach((gameUser) => {
+      (gameUser.successes || []).forEach((item) => {
+        const successId = item.success?.id || item.successId;
+        if (successId && item.earnedAt && !unlockedDates.has(successId)) {
+          unlockedDates.set(successId, item.earnedAt);
+        }
+      });
+    });
+    const unlockedIds = new Set([
+      ...(userSuccesses.result || []).map((item) => item.success?.id || item.successId),
+      ...(gameUsers.games || []).flatMap((gameUser) => (
+        gameUser.successes || []
+      ).map((item) => item.success?.id || item.successId)),
+    ]);
     mergeRemoteData({
-      user: successes.user,
-      achievements: (successes.result || []).map((item) => ({
-        id: item.success?.id || item.successId,
-        name: item.success?.title || "Succès",
-        game: item.success?.game?.name || item.success?.gameId || "PlayWeb",
+      user: gameUsers.user || userSuccesses.user,
+      achievements: (allSuccesses.result || []).map((success) => ({
+        id: success.id,
+        name: success.title || "Succès",
+        game: success.game?.name || gameNames.get(success.gameId) || success.gameId || "PlayWeb",
         icon: "trophy",
-        rare: item.success?.rarity || "COMMON",
-        done: true,
+        rare: success.rarity || "COMMON",
+        done: unlockedIds.has(success.id),
+        unlockedAt: unlockedDates.get(success.id) || null,
       })),
     });
     return;
   }
 
   if (page === "profile") {
-    const gameUsers = await api.getGames();
-    if (Array.isArray(gameUsers.games) && gameUsers.games.length) {
-      games.splice(0, games.length, ...gameUsers.games
-        .filter((gameUser) => gameUser.game)
-        .map((gameUser) => ({
-          id: gameUser.game.id,
-          slug: gameUser.game.slug,
-          name: gameUser.game.name,
+    const [gameUsers, home] = await Promise.all([api.getGames(), api.getHome()]);
+    if (Array.isArray(home.games) && home.games.length) {
+      games.splice(0, games.length, ...home.games.map((game) => ({
+          id: game.id,
+          slug: game.slug,
+          name: game.name,
           genre: "PlayWeb",
-          description: gameUser.game.description || "Découvrez ce jeu PlayWeb.",
-          launchUrl: gameUser.game.launchUrl || null,
+          description: game.description || "Découvrez ce jeu PlayWeb.",
+          launchUrl: game.launchUrl || null,
         })));
     }
     const remoteAchievements = (gameUsers.games || []).flatMap((gameUser) => {

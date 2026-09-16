@@ -50,7 +50,7 @@ window.pageInit = ({ user, data, games, setText, toast, save, icons, api }) => {
   setText("[data-profile-name]", user.name);
   setText("[data-profile-status]", user.status);
   setText("[data-profile-joined]", new Date(profile.joinedAt || Date.now()).toLocaleDateString("fr-FR", { month: "long", year: "numeric" }));
-  setText("[data-friends-count]", data.friends.length);
+  setText("[data-friends-count]", profile.friendsCount ?? data.friends.length);
   setText("[data-achievements-count]", `${unlocked} / ${achievements.length}`);
   setText("[data-hours-count]", `${totalHours.toFixed(1)} h`);
   setText("[data-games-count]", `${playedGames.length} / ${games.length}`);
