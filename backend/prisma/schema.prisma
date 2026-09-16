@@ -16,7 +16,7 @@ model User {
   id        String     @id @default(uuid())
   token     String     @unique
   avatarUrl String?
-  name      String?
+  name      String?    @unique
   status    UserStatus @default(OFFLINE)
 
   createdAt DateTime @default(now())
@@ -150,8 +150,9 @@ enum FriendshipStatus {
 model Game {
   id          String  @id @default(uuid())
   slug        String  @unique
-  name        String
+  name        String  @unique
   description String? @db.Text
+  tag         String?
   coverUrl    String?
   launchUrl   String?
 

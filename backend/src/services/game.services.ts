@@ -12,6 +12,14 @@ const getGames = async(userId: string) => {
       },
       include: {
         user: {
+          include: {
+            _count: {
+              select: {
+                friendshipsReceived: true,
+                friendshipsSent: true
+              }
+            }
+          },
           omit: {
             token: true,
           },
