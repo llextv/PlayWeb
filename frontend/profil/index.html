@@ -4,6 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>PlayWeb - Profil</title>
+    <script src="../auth-guard.js"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
     <link rel="stylesheet" href="../style.css" />
     <link rel="stylesheet" href="style.css" />
@@ -20,7 +21,12 @@
       <main class="profile-content">
         <section class="profile-hero">
           <div class="profile-hero-main">
-            <div class="avatar profile-avatar" data-profile-avatar></div>
+            <div class="profile-avatar-wrap">
+              <div class="avatar profile-avatar" data-profile-avatar></div>
+              <button class="avatar-edit-btn" type="button" aria-label="Modifier la photo de profil" title="Modifier la photo de profil">
+                <i data-lucide="pencil"></i>
+              </button>
+            </div>
             <div>
               <h1 data-profile-name></h1>
               <div class="profile-meta">

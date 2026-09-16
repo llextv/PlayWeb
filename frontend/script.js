@@ -2,6 +2,7 @@
 
 const SESSION_KEY = "websteam.session.v2";
 const DATA_KEY = "websteam.data.v2";
+const API_BASE_URL = (window.PLAYWEB_API_URL || "http://localhost:3000/api/v1").replace(/\/$/, "");
 
 const accounts = {
   "demo-token-alice": {
@@ -127,10 +128,43 @@ const currentPage = () => document.body.dataset.page || "shop";
 const currentUser = () => {
   const account = accounts[session.token];
   return {
-    ...account,
+    ...(account || {}),
     ...(data?.profile || {}),
-    name: data?.profile?.name || account.name,
+    name: data?.profile?.name || account?.name || "Joueur",
   };
+};
+
+const isBackendToken = (token) => typeof token === "string" && token.split(".").length === 3;
+
+async function apiRequest(path, options = {}) {
+  return apiRequestWithToken(session?.token, path, options);
+}
+
+async function apiRequestWithToken(token, path, options = {}) {
+  try {
+    const response = await fetch(`${API_BASE_URL}${path}`, {
+      ...options,
+      headers: {
+        "Content-Type": "application/json",
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        ...(options.headers || {}),
+      },
+    });
+    const body = await response.json().catch(() => ({}));
+    return { ok: response.ok, ...body };
+  } catch {
+    return { ok: false, error: "Backend indisponible." };
+  }
+}
+
+const api = {
+  enabled: () => isBackendToken(session?.token),
+  getMe: () => apiRequest("/auth/me"),
+  updateAvatar: (avatarUrl) => apiRequest("/auth/me/avatar", {
+    method: "PATCH",
+    body: JSON.stringify({ avatarUrl }),
+  }),
+  register: () => apiRequestWithToken(null, "/auth/register", { method: "POST" }),
 };
 
 function loadSession() {
@@ -142,7 +176,7 @@ function loadSession() {
     data = null;
   }
 
-  if (session && !accounts[session.token]) {
+  if (session && !accounts[session.token] && !isBackendToken(session.token)) {
     storage.remove(SESSION_KEY);
     session = null;
   }
@@ -195,53 +229,115 @@ function logout() {
   showLogin();
 }
 
-function showLogin() {
+async function showLogin() {
   document.querySelector("#app").innerHTML = `
-    <main class="login">
-      <section class="token-modal-card">
-        <div class="brand login-brand"><span class="brand-mark">PW</span><span>PlayWeb</span></div>
-        <div class="eyebrow centered">Accès capsule</div>
-        <h1 class="centered">Reprenez<br>la partie.</h1>
-        <p class="muted centered login-description">Entrez votre token de démo pour synchroniser votre identité.</p>
-        <form id="login-form" class="form">
-          <input id="token" class="input" autocomplete="off" placeholder="demo-token-alice" required>
-          <button class="btn-play">Ouvrir la capsule</button>
-          <div id="login-error" class="hidden login-error"></div>
-        </form>
-        <div class="test-tokens">
-          <div class="eyebrow centered">Tokens de test</div>
-          ${Object.keys(accounts)
-            .map(
-              (token) =>
-                `<button class="token" data-token="${token}"><code>${token}</code><span>Utiliser</span></button>`,
-            )
-            .join("")}
+    <main class="auth-gate-overlay">
+      <section class="auth-gate-card" role="dialog" aria-modal="true" aria-labelledby="auth-title">
+        <h1 id="auth-title" class="auth-gate-title">Connexion</h1>
+        <p class="auth-gate-subtitle">Entre votre identifiant de connexion pour vous connecter.</p>
+        <input id="auth-gate-input" class="auth-gate-input" type="text" placeholder="Votre identifiant de connexion" autocomplete="off">
+        <button id="auth-gate-login-btn" class="auth-gate-login-btn" type="button">Se connecter</button>
+        <p class="auth-gate-sep">Ou</p>
+        <div class="auth-gate-token-wrap">
+          <div class="auth-gate-token-head">Voici votre identifiant de connexion :</div>
+          <div class="auth-gate-token-row">
+            <div id="auth-gate-token-value" class="auth-gate-token-value">Création en cours...</div>
+            <button id="auth-gate-copy-btn" class="auth-gate-copy-btn" type="button">Copier</button>
+          </div>
+          <p class="auth-gate-warn">Merci de ne pas diffuser votre identifiant, n'importe quelle personne possédant votre identifiant peut se connecter à votre compte.</p>
         </div>
+        <button id="auth-gate-continue-btn" class="auth-gate-continue-btn" type="button">Continuer</button>
+        <p id="auth-gate-feedback" class="auth-gate-feedback" aria-live="polite"></p>
       </section>
     </main>`;
 
-  document.querySelectorAll("[data-token]").forEach((button) => {
-    button.onclick = () => {
-      document.querySelector("#token").value = button.dataset.token;
-    };
-  });
+  const input = document.querySelector("#auth-gate-input");
+  const loginButton = document.querySelector("#auth-gate-login-btn");
+  const copyButton = document.querySelector("#auth-gate-copy-btn");
+  const continueButton = document.querySelector("#auth-gate-continue-btn");
+  const tokenValue = document.querySelector("#auth-gate-token-value");
+  const feedback = document.querySelector("#auth-gate-feedback");
+  let temporaryToken = "";
 
-  document.querySelector("#login-form").onsubmit = (event) => {
-    event.preventDefault();
-    const token = document.querySelector("#token").value.trim();
-    const error = document.querySelector("#login-error");
+  const setFeedback = (message, success = false) => {
+    feedback.textContent = message;
+    feedback.style.color = success ? "#86efac" : "#fda4af";
+  };
 
-    if (!accounts[token]) {
-      error.textContent = "Token invalide. Utilisez un token de démonstration.";
-      error.classList.remove("hidden");
-      return;
-    }
-
+  const openSession = (token, user = null) => {
     session = { token, createdAt: Date.now() };
-    data = clone(defaults);
+    data = {
+      ...clone(defaults),
+      profile: {
+        ...clone(defaults.profile),
+        name: user?.name || null,
+        avatarUrl: user?.avatarUrl || null,
+      },
+    };
     saveData();
     renderApp();
   };
+
+  const registration = await api.register();
+  if (registration.ok && registration.token) {
+    temporaryToken = registration.token;
+    tokenValue.textContent = temporaryToken;
+  } else {
+    tokenValue.textContent = "Indisponible";
+    setFeedback(registration.error || "Le backend est indisponible pour le moment.");
+  }
+
+  copyButton.onclick = async () => {
+    if (!temporaryToken) return;
+    try {
+      await navigator.clipboard.writeText(temporaryToken);
+      setFeedback("Identifiant copié ✅", true);
+    } catch {
+      setFeedback("Impossible de copier automatiquement.");
+    }
+  };
+
+  continueButton.onclick = () => {
+    if (temporaryToken) openSession(temporaryToken);
+    else setFeedback("Aucun identifiant temporaire disponible.");
+  };
+
+  const tryLogin = async () => {
+    const token = input.value.trim();
+    if (!token) {
+      setFeedback("Entre un identifiant valide.");
+      return;
+    }
+
+    if (accounts[token]) {
+      openSession(token);
+      return;
+    }
+
+    if (!isBackendToken(token)) {
+      setFeedback("Identifiant invalide ou expiré.");
+      return;
+    }
+
+    loginButton.disabled = true;
+    const result = await apiRequestWithToken(token, "/auth/me");
+    loginButton.disabled = false;
+    if (!result.ok || !result.user) {
+      setFeedback("Identifiant invalide ou expiré.");
+      return;
+    }
+
+    openSession(token, result.user);
+  };
+
+  loginButton.onclick = tryLogin;
+  input.onkeydown = (event) => {
+    if (event.key === "Enter") {
+      event.preventDefault();
+      tryLogin();
+    }
+  };
+  input.focus();
 }
 
 function renderShell() {
@@ -305,6 +401,7 @@ function renderApp() {
     toast,
     save: saveData,
     icons,
+    api: api.enabled() ? api : null,
   });
 }
 

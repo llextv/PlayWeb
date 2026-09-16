@@ -3,7 +3,14 @@
 .profile-hero { padding: 24px; display: flex; align-items: center; justify-content: space-between; gap: 24px; background: linear-gradient(135deg, rgba(249,115,22,.2), rgba(220,38,38,.04)), var(--card-grad); }
 .profile-hero-main, .profile-meta, .profile-hero-actions, .inline-form, .setting-row, .game-row-title, .achievement-summary { display: flex; align-items: center; }
 .profile-hero-main { gap: 18px; }
+.profile-avatar-wrap { position: relative; flex: 0 0 auto; }
 .profile-avatar { width: 88px; height: 88px; border-radius: 24px; font-size: 34px; background: linear-gradient(135deg, #f97316, #dc2626); box-shadow: 0 12px 30px rgba(249,115,22,.25); }
+.profile-avatar.has-image { background-position: center; background-size: cover; background-repeat: no-repeat; }
+.avatar-edit-btn { position: absolute; right: -7px; bottom: -7px; display: grid; place-items: center; width: 30px; height: 30px; padding: 0; border: 3px solid var(--card-bg, #171923); border-radius: 50%; color: #fff; background: var(--accent, #f97316); cursor: pointer; transition: transform .18s ease, filter .18s ease, box-shadow .18s ease; }
+.avatar-edit-btn:hover, .avatar-edit-btn:focus-visible { filter: brightness(1.12); box-shadow: 0 5px 14px rgba(249,115,22,.35); transform: scale(1.1); outline: none; }
+.avatar-edit-btn:active, .avatar-edit-btn.is-clicked { transform: scale(.9) rotate(-12deg); }
+.avatar-edit-btn svg { width: 14px; height: 14px; transition: transform .18s ease; }
+.avatar-edit-btn.is-clicked svg { transform: rotate(12deg); }
 .profile-hero h1 { font-size: 32px; font-weight: 900; }
 .profile-subtitle { color: var(--text-muted); margin: 4px 0 12px; }
 .profile-meta { gap: 14px; flex-wrap: wrap; }

@@ -1,4 +1,4 @@
-window.pageInit = ({ user, data, games, setText, toast, save, icons }) => {
+window.pageInit = ({ user, data, games, setText, toast, save, icons, api }) => {
   setText("#page-title", "Votre profil");
 
   const profile = data.profile || {};
@@ -9,7 +9,15 @@ window.pageInit = ({ user, data, games, setText, toast, save, icons }) => {
   const playedGames = games.filter((game) => profile.games?.[game.id]?.played);
   const totalHours = games.reduce((sum, game) => sum + Number(profile.games?.[game.id]?.hours || 0), 0);
 
-  setText("[data-profile-avatar]", user.avatar);
+  const renderAvatar = (avatarUrl, fallback = user.avatar) => {
+    const avatar = document.querySelector("[data-profile-avatar]");
+    if (!avatar) return;
+    avatar.textContent = avatarUrl ? "" : fallback;
+    avatar.style.backgroundImage = avatarUrl ? `url("${avatarUrl}")` : "";
+    avatar.classList.toggle("has-image", Boolean(avatarUrl));
+  };
+
+  renderAvatar(user.avatarUrl);
   setText("[data-profile-name]", user.name);
   setText("[data-profile-status]", user.status);
   setText("[data-profile-joined]", new Date(profile.joinedAt || Date.now()).toLocaleDateString("fr-FR", { month: "long", year: "numeric" }));
@@ -18,6 +26,16 @@ window.pageInit = ({ user, data, games, setText, toast, save, icons }) => {
   setText("[data-hours-count]", `${totalHours.toFixed(1)} h`);
   setText("[data-games-count]", `${playedGames.length} / ${games.length}`);
   document.querySelector("[data-profile-input]").value = user.name;
+
+  if (api) {
+    api.getMe().then((result) => {
+      if (!result.ok || !result.user) return;
+      user.avatarUrl = result.user.avatarUrl;
+      data.profile.avatarUrl = result.user.avatarUrl;
+      save();
+      renderAvatar(user.avatarUrl);
+    });
+  }
 
   const percent = achievements.length ? Math.round((unlocked / achievements.length) * 100) : 0;
   setText("[data-achievement-percent]", `${percent}%`);
@@ -94,6 +112,15 @@ window.pageInit = ({ user, data, games, setText, toast, save, icons }) => {
   document.querySelector("[data-edit-profile]").onclick = () => {
     document.querySelector("[data-profile-input]").focus();
     document.querySelector("[data-profile-input]").scrollIntoView({ behavior: "smooth", block: "center" });
+  };
+
+  document.querySelector(".avatar-edit-btn").onclick = (event) => {
+    const button = event.currentTarget;
+    button.classList.remove("is-clicked");
+    requestAnimationFrame(() => {
+      button.classList.add("is-clicked");
+      window.setTimeout(() => button.classList.remove("is-clicked"), 350);
+    });
   };
 
   document.querySelector("[data-delete-account]").onclick = () => {

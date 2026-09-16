@@ -1,4 +1,3 @@
-import { success } from "zod"
 import { prisma } from "../config/prisma.js"
 import JWT from "../utils/JWT.js"
 
@@ -16,6 +15,7 @@ const getMe = async (userId: string) => {
 
     return {success: true, user};
   }catch(error){
+    console.error("Auth getMe failed:", error);
     return {success: false, error}
   }
 }
@@ -42,8 +42,24 @@ const register = async() => {
     });
     return {success: true, token}
   }catch(error){
+    console.error("Auth register failed:", error);
     return {success: false, error}
   }
 }
 
-export default {getMe, register}
+const updateAvatar = async (userId: string, avatarUrl: string | null) => {
+  try {
+    const user = await prisma.user.update({
+      where: { id: userId },
+      data: { avatarUrl },
+      omit: { token: true },
+    });
+
+    return { success: true, user };
+  } catch (error) {
+    console.error("Auth avatar update failed:", error);
+    return { success: false, error };
+  }
+};
+
+export default {getMe, register, updateAvatar}
