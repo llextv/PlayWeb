@@ -15,9 +15,11 @@ datasource db {
 model User {
   id        String     @id @default(uuid())
   token     String     @unique
+  profileToken String?  @unique
   avatarUrl String?
   name      String?    @unique
   status    UserStatus @default(OFFLINE)
+  isPublic  Boolean    @default(true)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

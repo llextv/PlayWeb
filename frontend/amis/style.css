@@ -357,3 +357,34 @@ body {
     width: 100%;
   }
 }
+
+@media (max-width: 420px) {
+  .friends-hero,
+  .friends-card,
+  .friends-list-card,
+  .profile-card {
+    padding: 14px;
+    border-radius: 16px;
+  }
+
+  .friends-hero h1 {
+    font-size: 24px;
+  }
+
+  .friend-details {
+    align-items: flex-start;
+  }
+
+  .friend-row {
+    padding: 10px;
+  }
+
+  .friend-actions {
+    gap: 6px;
+  }
+
+  .friend-actions button {
+    padding-inline: 8px;
+    font-size: 12px;
+  }
+}

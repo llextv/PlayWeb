@@ -651,6 +651,11 @@ button, input, select {
 .auth-gate-token-row { display: grid; grid-template-columns: 1fr auto; gap: .55rem; align-items: center; }
 .auth-gate-token-value { width: 100%; overflow: hidden; padding: .58rem .65rem; border: 1px solid rgba(255, 255, 255, .14); border-radius: 10px; color: #f8fafc; background: rgba(0, 0, 0, .26); font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: .78rem; text-overflow: ellipsis; white-space: nowrap; }
 .auth-gate-copy-btn { min-height: 38px; padding: .4rem .8rem; border: 1px solid rgba(56, 189, 248, .62); border-radius: 10px; color: #e0f2fe; background: linear-gradient(135deg, rgba(56, 189, 248, .24), rgba(37, 99, 235, .2)); cursor: pointer; font-weight: 800; }
+.auth-gate-name-wrap { margin-top: 1rem; padding: .9rem; border: 1px solid rgba(255, 255, 255, .14); border-radius: 14px; background: rgba(255, 255, 255, .03); }
+.auth-gate-name-head { color: #e5e5e5; font-size: .88rem; font-weight: 700; }
+.auth-gate-name-help { margin: .4rem 0 .8rem; color: var(--text-muted); font-size: .82rem; line-height: 1.45; }
+.auth-gate-name-label { display: block; margin-bottom: .4rem; color: #f5f5f5; font-size: .82rem; font-weight: 700; }
+.auth-gate-name-wrap .auth-gate-input { background: rgba(0, 0, 0, .26); }
 .auth-gate-continue-btn { margin-top: .85rem; border-color: rgba(34, 197, 94, .7); color: #dcfce7; background: linear-gradient(135deg, rgba(34, 197, 94, .34), rgba(22, 163, 74, .25)); box-shadow: 0 12px 24px rgba(34, 197, 94, .2); }
 .auth-gate-warn { margin-top: .6rem; color: #fca5a5; font-size: .82rem; line-height: 1.4; }
 .auth-gate-feedback { min-height: 1.1rem; margin-top: .6rem; color: #fda4af; font-size: .86rem; font-weight: 700; }
@@ -775,6 +780,60 @@ button, input, select {
 
     .card:has(.table) {
         overflow-x: auto !important;
+    }
+}
+
+@media(max-width:420px) {
+    .sidebar {
+        width: 56px;
+        padding-inline: 6px;
+    }
+
+    .main {
+        width: calc(100vw - 56px);
+        margin-left: 56px;
+        padding: 10px;
+    }
+
+    .topbar {
+        margin-bottom: 16px;
+        padding: 12px;
+        border-radius: 16px;
+    }
+
+    .topbar h1 {
+        font-size: 20px;
+    }
+
+    .topbar .btn {
+        width: 100%;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    .card,
+    .updates-card {
+        padding: 14px;
+        border-radius: 16px;
+    }
+
+    .games-hero h2 {
+        font-size: 28px;
+    }
+
+    .game-card .card-body {
+        min-height: 0;
+    }
+
+    .toast-wrap {
+        right: 10px;
+        bottom: 10px;
+        left: 10px;
+    }
+
+    .toast {
+        padding: 12px 14px;
     }
 }
 

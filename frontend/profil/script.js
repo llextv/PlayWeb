@@ -13,6 +13,30 @@ window.pageInit = ({ user, data, games, setText, toast, save, icons, api }) => {
   const unlocked = achievements.filter((item) => item.done).length;
   const playedGames = games.filter((game) => profile.games?.[game.id]?.played);
   const totalHours = games.reduce((sum, game) => sum + Number(profile.games?.[game.id]?.hours || 0), 0);
+  let profileShareUrl = null;
+  const copyProfileLink = async (url) => {
+    if (navigator.clipboard && window.isSecureContext) {
+      await navigator.clipboard.writeText(url);
+      return true;
+    }
+
+    const input = document.createElement("textarea");
+    input.value = url;
+    input.setAttribute("readonly", "");
+    input.style.position = "fixed";
+    input.style.opacity = "0";
+    input.style.left = "-9999px";
+    document.body.appendChild(input);
+    input.focus();
+    input.select();
+    let copied = false;
+    try {
+      copied = document.execCommand("copy");
+    } finally {
+      input.remove();
+    }
+    return copied;
+  };
 
   const renderAvatar = (avatarUrl, fallback = user.avatar) => {
     const avatar = document.querySelector("[data-profile-avatar]");
@@ -91,9 +115,21 @@ window.pageInit = ({ user, data, games, setText, toast, save, icons, api }) => {
   };
 
   privacySelect.onchange = () => {
-    profile.privacy = privacySelect.value;
-    updatePrivacy();
-    toast(profile.privacy === "public" ? "Profil visible par tous." : "Profil maintenant privé.");
+    const isPublic = privacySelect.value === "public";
+    if (!api) {
+      updatePrivacy();
+      return;
+    }
+    api.updatePrivacy(isPublic).then((result) => {
+      if (!result.ok) {
+        updatePrivacy();
+        toast(result.error || "Impossible de modifier la visibilité.");
+        return;
+      }
+      profile.privacy = isPublic ? "public" : "private";
+      updatePrivacy();
+      toast(isPublic ? "Profil visible par tous." : "Profil maintenant privé.");
+    });
   };
 
   let tokenVisible = false;
@@ -108,11 +144,32 @@ window.pageInit = ({ user, data, games, setText, toast, save, icons, api }) => {
   };
 
   document.querySelector("[data-share-profile]").onclick = async () => {
-    const shareData = { title: `Profil de ${user.name} — PlayWeb`, text: `Découvre le profil de ${user.name} sur PlayWeb !`, url: window.location.href };
-    if (navigator.share) await navigator.share(shareData);
-    else {
-      await navigator.clipboard?.writeText(window.location.href);
+    if (!api) {
+      toast("Le backend est indisponible.");
+      return;
+    }
+    if (!profileShareUrl) {
+      const result = await api.getProfileLink();
+      if (!result.ok || !result.profileToken) {
+        toast(result.error || "Impossible de générer le lien.");
+        return;
+      }
+      profileShareUrl = new URL(
+        `partage.html?token=${encodeURIComponent(result.profileToken)}`,
+        window.location.href,
+      ).href;
+    }
+    const url = profileShareUrl;
+    let copied = false;
+    try {
+      copied = await copyProfileLink(url);
+    } catch {
+      copied = false;
+    }
+    if (copied) {
       toast("Lien du profil copié.");
+    } else {
+      window.prompt("Copiez ce lien :", url);
     }
   };
 

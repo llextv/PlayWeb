@@ -3,6 +3,7 @@
 const SESSION_KEY = "websteam.session.v2";
 const DATA_KEY = "websteam.data.v2";
 const API_BASE_URL = (window.PLAYWEB_API_URL || "http://localhost:3000/api/v1").replace(/\/$/, "");
+const BRAINROT_API_BASE_URL = "https://darkgoldenrod-frog-258465.hostingersite.com";
 
 const accounts = {
   "demo-token-alice": {
@@ -145,6 +146,31 @@ const api = {
   declineFriend: (friendId) => apiRequest(`/friends/decline/${encodeURIComponent(friendId)}`, { method: "POST" }),
   deleteFriend: (friendId) => apiRequest(`/friends/${encodeURIComponent(friendId)}`, { method: "DELETE" }),
   getRanking: (gameId) => apiRequest(`/ranking/${encodeURIComponent(gameId)}`),
+  getBrainrotLeaderboard: async () => {
+    try {
+      const response = await fetch(`${BRAINROT_API_BASE_URL}/leaderboard/coinPerSec`, {
+        headers: {
+          Accept: "application/json",
+          ...(session?.token ? { Authorization: "Bearer " + session.token } : {}),
+        },
+      });
+      const body = await response.json().catch(() => ({}));
+      if (!response.ok || !body.success) {
+        return { ok: false, error: body.message || "Classement BrainrotStar indisponible." };
+      }
+      return {
+        ok: true,
+        result: {
+          scores: (Array.isArray(body.result) ? body.result : []).map((entry) => ({
+            score: Number(entry.goldPerSec || 0),
+            user: { name: entry.pseudo || "Joueur" },
+          })),
+        },
+      };
+    } catch {
+      return { ok: false, error: "Classement BrainrotStar indisponible." };
+    }
+  },
   getUserRankings: () => apiRequest("/ranking"),
   getSuccesses: () => apiRequest("/success"),
   getUserSuccesses: () => apiRequest("/success/user"),
@@ -155,6 +181,11 @@ const api = {
   updateName: (name) => apiRequest("/auth/me/name", {
     method: "PATCH",
     body: JSON.stringify({ name }),
+  }),
+  getProfileLink: () => apiRequest("/auth/me/profile-link"),
+  updatePrivacy: (isPublic) => apiRequest("/auth/me/privacy", {
+    method: "PATCH",
+    body: JSON.stringify({ isPublic }),
   }),
   register: () => apiRequestWithToken(null, "/auth/register", { method: "POST" }),
 };
@@ -202,6 +233,7 @@ function mergeRemoteData(remote) {
       name: remote.user.name || data.profile.name,
       avatarUrl: remote.user.avatarUrl || null,
       joinedAt: remote.user.createdAt || data.profile.joinedAt,
+      privacy: remote.user.isPublic === false ? "private" : "public",
     };
   }
 
@@ -325,8 +357,10 @@ async function hydrateRemoteData(page) {
   }
 
   if (page === "leaderboard") {
-    const game = games[0];
-    const ranking = game ? await api.getRanking(game.id) : null;
+    const game = games.find((item) => item.id === "brainrotstar") || games[0];
+    const ranking = game?.id === "brainrotstar"
+      ? await api.getBrainrotLeaderboard()
+      : game ? await api.getRanking(game.id) : null;
     initialPageData.ranking = ranking;
     mergeRemoteData({ user: ranking?.user });
     return;
@@ -379,6 +413,12 @@ async function showLogin() {
           </div>
           <p class="auth-gate-warn">Merci de ne pas diffuser votre identifiant, n'importe quelle personne possédant votre identifiant peut se connecter à votre compte.</p>
         </div>
+        <div class="auth-gate-name-wrap">
+          <div class="auth-gate-name-head">Créez votre compte :</div>
+          <p class="auth-gate-name-help">Choisissez le pseudo qui sera affiché sur votre profil et auprès des autres joueurs.</p>
+          <label class="auth-gate-name-label" for="auth-gate-name-input">Votre pseudo</label>
+          <input id="auth-gate-name-input" class="auth-gate-input" type="text" maxlength="24" placeholder="Ex. PlayerOne" autocomplete="nickname">
+        </div>
         <button id="auth-gate-continue-btn" class="auth-gate-continue-btn" type="button">Continuer</button>
         <p id="auth-gate-feedback" class="auth-gate-feedback" aria-live="polite"></p>
       </section>
@@ -389,6 +429,7 @@ async function showLogin() {
   const copyButton = document.querySelector("#auth-gate-copy-btn");
   const continueButton = document.querySelector("#auth-gate-continue-btn");
   const tokenValue = document.querySelector("#auth-gate-token-value");
+  const nameInput = document.querySelector("#auth-gate-name-input");
   const feedback = document.querySelector("#auth-gate-feedback");
   let temporaryToken = "";
 
@@ -431,8 +472,28 @@ async function showLogin() {
   };
 
   continueButton.onclick = () => {
-    if (temporaryToken) openSession(temporaryToken);
-    else setFeedback("Aucun identifiant temporaire disponible.");
+    if (!temporaryToken) {
+      setFeedback("Aucun identifiant temporaire disponible.");
+      return;
+    }
+    const name = nameInput.value.trim();
+    if (!name) {
+      setFeedback("Choisissez un pseudo pour continuer.");
+      nameInput.focus();
+      return;
+    }
+    continueButton.disabled = true;
+    apiRequestWithToken(temporaryToken, "/auth/me/name", {
+      method: "PATCH",
+      body: JSON.stringify({ name }),
+    }).then((result) => {
+      continueButton.disabled = false;
+      if (!result.ok) {
+        setFeedback(result.error || "Impossible d'enregistrer le pseudo.");
+        return;
+      }
+      openSession(temporaryToken, result.user);
+    });
   };
 
   const tryLogin = async () => {

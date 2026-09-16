@@ -19,3 +19,13 @@
 .games-grid {
   align-items: stretch;
 }
+
+@media (max-width: 600px) {
+  .games-hero {
+    padding: 18px;
+  }
+
+  .games-hero h2 {
+    font-size: clamp(28px, 9vw, 36px);
+  }
+}

@@ -1,5 +1,6 @@
 import { prisma } from "../config/prisma.js"
 import JWT from "../utils/JWT.js"
+import crypto from "node:crypto";
 
 const getMe = async (userId: string) => {
   try{
@@ -77,4 +78,99 @@ const updateName = async (userId: string, name: string) => {
   }
 };
 
-export default {getMe, register, updateAvatar, updateName}
+const getOrCreateProfileToken = async (userId: string) => {
+  try {
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      select: { profileToken: true },
+    });
+    if (!user) return { success: false, error: "User not found" };
+
+    const profileToken = user.profileToken || crypto.randomBytes(18).toString("hex");
+    if (!user.profileToken) {
+      await prisma.user.update({
+        where: { id: userId },
+        data: { profileToken },
+      });
+    }
+
+    return { success: true, profileToken };
+  } catch (error) {
+    console.error("Profile link generation failed:", error);
+    return { success: false, error };
+  }
+};
+
+const getPublicProfile = async (profileToken: string) => {
+  try {
+    const user = await prisma.user.findUnique({
+      where: { profileToken },
+      select: {
+        id: true,
+        name: true,
+        avatarUrl: true,
+        createdAt: true,
+        isPublic: true,
+        _count: {
+          select: {
+            friendshipsSent: { where: { status: "ACCEPTED" } },
+            friendshipsReceived: { where: { status: "ACCEPTED" } },
+          },
+        },
+        games: {
+          select: {
+            playedHours: true,
+            game: { select: { name: true } },
+          },
+        },
+        achievements: { select: { id: true } },
+      },
+    });
+
+    if (!user) return { success: false, status: 404, error: "Profile not found" };
+    if (!user.isPublic) return { success: false, status: 403, error: "Profile is private" };
+
+    return {
+      success: true,
+      profile: {
+        id: user.id,
+        name: user.name || "Joueur",
+        avatarUrl: user.avatarUrl,
+        createdAt: user.createdAt,
+        friendsCount: user._count.friendshipsSent + user._count.friendshipsReceived,
+        games: user.games.map((game) => ({
+          name: game.game.name,
+          playedHours: Number(game.playedHours || 0),
+        })),
+        achievementsCount: user.achievements.length,
+      },
+    };
+  } catch (error) {
+    console.error("Public profile lookup failed:", error);
+    return { success: false, status: 500, error };
+  }
+};
+
+const updatePrivacy = async (userId: string, isPublic: boolean) => {
+  try {
+    const user = await prisma.user.update({
+      where: { id: userId },
+      data: { isPublic },
+      omit: { token: true, profileToken: true },
+    });
+    return { success: true, user };
+  } catch (error) {
+    console.error("Profile privacy update failed:", error);
+    return { success: false, error };
+  }
+};
+
+export default {
+  getMe,
+  register,
+  updateAvatar,
+  updateName,
+  getOrCreateProfileToken,
+  getPublicProfile,
+  updatePrivacy,
+}

@@ -40,11 +40,15 @@ const getFriends = async(userId: string) => {
 const askFriends = async(userId: string, friendUsername: string) => {
   try{
     let findUser = await prisma.user.findUnique({
-      where: {
-        name: friendUsername
-      }
+      where: friendUsername === userId
+        ? { name: friendUsername }
+        : { id: friendUsername },
     });
+    if (!findUser) {
+      findUser = await prisma.user.findUnique({ where: { name: friendUsername } });
+    }
     if(!findUser) return {success: false, error: "Unable to find user"};
+    if (findUser.id === userId) return {success: false, error: "You cannot add yourself"};
 
     let askFriends = await prisma.friendship.create({
       data: {
