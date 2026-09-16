@@ -13,11 +13,11 @@ datasource db {
 //
 
 model User {
-  id           String     @id @default(uuid())
-  token        String     @unique
-  avatarUrl    String?
-  name         String?
-  status       UserStatus @default(OFFLINE)
+  id        String     @id @default(uuid())
+  token     String     @unique
+  avatarUrl String?
+  name      String?
+  status    UserStatus @default(OFFLINE)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -26,14 +26,73 @@ model User {
   friendshipsSent     Friendship[] @relation("FriendshipRequester")
   friendshipsReceived Friendship[] @relation("FriendshipAddressee")
 
-  invitesSent    GameInvite[]        @relation("InviteSender")
-  invitesReceived GameInvite[]       @relation("InviteReceiver")
+  invitesSent     GameInvite[] @relation("InviteSender")
+  invitesReceived GameInvite[] @relation("InviteReceiver")
 
   // Scores et succès
   leaderboardScores LeaderboardScore[]
   achievements      UserAchievement[]
 
+  // Parties
+  games GameUser[]
+
   @@index([status])
+}
+
+model Success {
+  id String @id @default(uuid())
+
+  gameId String
+  game   Game   @relation(fields: [gameId], references: [id], onDelete: Cascade)
+
+  title       String
+  description String?
+  rarity      SuccessRarity @default(COMMON)
+
+  earnedBy GameUserSuccess[]
+
+  createdAt DateTime @default(now())
+
+  @@index([gameId])
+}
+
+model GameUser {
+  id String @id @default(uuid())
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  gameId String
+  game   Game   @relation(fields: [gameId], references: [id], onDelete: Cascade)
+
+  status PlayerStatus @default(JOINED)
+
+  stats Json?
+
+  successes GameUserSuccess[]
+
+  joinedAt   DateTime  @default(now())
+  finishedAt DateTime?
+
+  @@unique([userId, gameId])
+  @@index([gameId])
+  @@index([userId])
+  @@index([gameId, status])
+}
+
+model GameUserSuccess {
+  id String @id @default(uuid())
+
+  gameUserId String
+  gameUser   GameUser @relation(fields: [gameUserId], references: [id], onDelete: Cascade)
+
+  successId String
+  success   Success @relation(fields: [successId], references: [id], onDelete: Cascade)
+
+  earnedAt DateTime @default(now())
+
+  @@unique([gameUserId, successId])
+  @@index([successId])
 }
 
 enum UserStatus {
@@ -44,6 +103,18 @@ enum UserStatus {
 }
 
 //
+// RARETÉ DES SUCCÈS
+//
+
+enum SuccessRarity {
+  COMMON
+  UNCOMMON
+  RARE
+  EPIC
+  LEGENDARY
+}
+
+//
 // AMIS
 //
 
@@ -51,10 +122,10 @@ model Friendship {
   id String @id @default(uuid())
 
   requesterId String
-  requester   User   @relation("FriendshipRequester",fields: [requesterId],references: [id],onDelete: Cascade)
+  requester   User   @relation("FriendshipRequester", fields: [requesterId], references: [id], onDelete: Cascade)
 
   addresseeId String
-  addressee   User   @relation("FriendshipAddressee",fields: [addresseeId],references: [id],onDelete: Cascade)
+  addressee   User   @relation("FriendshipAddressee", fields: [addresseeId], references: [id], onDelete: Cascade)
 
   status    FriendshipStatus @default(PENDING)
   createdAt DateTime         @default(now())
@@ -84,18 +155,20 @@ model Game {
   coverUrl    String?
   launchUrl   String?
 
-  isActive Boolean  @default(true)
+  isActive  Boolean  @default(true)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   // Parties
-  invites  GameInvite[]
+  invites GameInvite[]
 
   // Leaderboard
   leaderboards Leaderboard[]
 
   // Succès
   achievements Achievement[]
+  successes    Success[]
+  gameUsers    GameUser[]
 
   @@index([isActive])
 }
@@ -121,16 +194,16 @@ model GameInvite {
   id String @id @default(uuid())
 
   senderId String
-  sender   User   @relation("InviteSender",fields: [senderId],references: [id],onDelete: Cascade)
+  sender   User   @relation("InviteSender", fields: [senderId], references: [id], onDelete: Cascade)
 
   receiverId String
-  receiver   User   @relation("InviteReceiver",fields: [receiverId],references: [id],onDelete: Cascade)
+  receiver   User   @relation("InviteReceiver", fields: [receiverId], references: [id], onDelete: Cascade)
 
   gameId String
-  game   Game  @relation(fields: [gameId], references: [id], onDelete: Cascade)
+  game   Game   @relation(fields: [gameId], references: [id], onDelete: Cascade)
 
   status      InviteStatus @default(PENDING)
-  createdAt   DateTime      @default(now())
+  createdAt   DateTime     @default(now())
   respondedAt DateTime?
 
   @@index([receiverId, status])
@@ -179,10 +252,10 @@ model LeaderboardScore {
   id String @id @default(uuid())
 
   leaderboardId String
-  leaderboard   Leaderboard @relation(fields: [leaderboardId],references: [id],onDelete: Cascade)
+  leaderboard   Leaderboard @relation(fields: [leaderboardId], references: [id], onDelete: Cascade)
 
   userId String
-  user   User   @relation(fields: [userId],references: [id],onDelete: Cascade)
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   score      Float
   recordedAt DateTime @default(now())
@@ -217,10 +290,10 @@ model UserAchievement {
   id String @id @default(uuid())
 
   userId String
-  user   User   @relation(fields: [userId],references: [id],onDelete: Cascade)
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   achievementId String
-  achievement   Achievement @relation(fields: [achievementId],references: [id],onDelete: Cascade)
+  achievement   Achievement @relation(fields: [achievementId], references: [id], onDelete: Cascade)
 
   unlockedAt DateTime @default(now())
 
