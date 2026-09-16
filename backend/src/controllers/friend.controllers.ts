@@ -3,6 +3,7 @@ import friendServices from "../services/friend.services.js";
 import {z} from "zod";
 
 const parseId = z.string().min(5).max(255);
+const username = z.string().min(1).max(255);
 
 const getFriends = async(req: Request, res: Response) => {
   try {
@@ -21,10 +22,15 @@ const getFriends = async(req: Request, res: Response) => {
 const askFriends = async(req: Request, res: Response) => {
   try{
     let userId = req.user.id;
-    let friend = parseId.parse(req.params.friendUserId);
+    let friend = username.parse(req.params.friendUserId);
 
     let result = await friendServices.askFriends(userId, friend);
-    if(!result.success) return new Error("Ask Friend failed");
+    if(!result.success){
+      if(result.error = "Unable to find user"){
+        return res.status(404).json({sucess: false, error: result.error}); 
+      }
+      return new Error("Ask Friend failed");
+    }
 
     return res.status(200).json({success: true, result});
   }catch(error){
