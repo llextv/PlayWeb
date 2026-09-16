@@ -5,6 +5,14 @@ const getGames = async(userId: string) => {
     const user = await prisma.user.findUnique({
       where: { id: userId },
       omit: { token: true },
+      include: {
+        _count: {
+          select: {
+            friendshipsSent: { where: { status: "ACCEPTED" } },
+            friendshipsReceived: { where: { status: "ACCEPTED" } },
+          },
+        },
+      },
     });
     let games = await prisma.gameUser.findMany({
       where: {
@@ -12,14 +20,6 @@ const getGames = async(userId: string) => {
       },
       include: {
         user: {
-          include: {
-            _count: {
-              select: {
-                friendshipsSent: { where: { status: "ACCEPTED" } },
-                friendshipsReceived: { where: { status: "ACCEPTED" } },
-              },
-            },
-          },
           omit: {
             token: true,
           },
