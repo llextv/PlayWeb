@@ -1,7 +1,6 @@
 window.pageInit = ({ data, user, games, setText, toast, icons, api, save }) => {
-  setText("#page-title", "Équipage");
-  setText("[data-profile-name]", user.name);
-  setText("[data-friends-count]", `${data.friends.length} amis`);
+setText("#page-title", "Équipage");
+setText("[data-friends-count]", `${data.friends.length} amis`);
 
   const friendsList = document.querySelector("[data-friends-list]");
   const inviteModal = document.querySelector("[data-invite-modal]");
@@ -149,39 +148,6 @@ window.pageInit = ({ data, user, games, setText, toast, icons, api, save }) => {
       toast("Demande envoyée.");
       input.value = "";
     });
-  };
-
-  document.querySelector("[data-profile-form]").onsubmit = async (event) => {
-    event.preventDefault();
-    const input = document.querySelector("[data-profile-input]");
-    const feedback = document.querySelector("[data-profile-feedback]");
-    const name = input.value.trim();
-
-    if (!name) {
-      feedback.textContent = "Entre un pseudo valide.";
-      feedback.style.color = "#fda4af";
-      return;
-    }
-
-    if (!api) {
-      feedback.textContent = "Le backend est indisponible.";
-      feedback.style.color = "#fda4af";
-      return;
-    }
-
-    const result = await api.updateName(name);
-    if (!result.ok || !result.user) {
-      feedback.textContent = result.error || "Impossible de modifier le pseudo.";
-      feedback.style.color = "#fda4af";
-      return;
-    }
-
-    user.name = result.user.name;
-    data.profile.name = result.user.name;
-    feedback.textContent = "Pseudo modifié avec succès.";
-    feedback.style.color = "#86efac";
-    setText("[data-profile-name]", result.user.name);
-    input.value = "";
   };
 
   icons();

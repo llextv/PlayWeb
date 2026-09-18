@@ -117,18 +117,34 @@ const getPublicProfile = async (profileToken: string) => {
             friendshipsReceived: { where: { status: "ACCEPTED" } },
           },
         },
+        achievements: {
+          select: {
+            achievementId: true,
+          },
+        },
         games: {
           select: {
             playedHours: true,
             game: { select: { name: true } },
           },
         },
-        achievements: { select: { id: true } },
       },
     });
 
     if (!user) return { success: false, status: 404, error: "Profile not found" };
     if (!user.isPublic) return { success: false, status: 403, error: "Profile is private" };
+
+    const earnedSuccesses = await prisma.gameUserSuccess.findMany({
+      where: {
+        gameUser: {
+          userId: user.id,
+        },
+      },
+      select: {
+        successId: true,
+      },
+    });
+    const earnedAchievementIds = user.achievements.map((achievement) => achievement.achievementId);
 
     return {
       success: true,
@@ -142,7 +158,10 @@ const getPublicProfile = async (profileToken: string) => {
           name: game.game.name,
           playedHours: Number(game.playedHours || 0),
         })),
-        achievementsCount: user.achievements.length,
+        achievementsCount: new Set([
+          ...earnedSuccesses.map((success) => success.successId),
+          ...earnedAchievementIds,
+        ]).size,
       },
     };
   } catch (error) {

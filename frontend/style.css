@@ -164,6 +164,10 @@ button, input, select {
     border: 1px solid var(--card-border-strong);
 }
 
+.user-mini .avatar {
+    background: linear-gradient(135deg, #f97316, #dc2626);
+}
+
 .avatar {
     width: 40px;
     height: 40px;
@@ -174,6 +178,12 @@ button, input, select {
     color: #fff;
     font-weight: 900;
     font-size: 16px;
+}
+
+.avatar.has-image {
+    background-position: center;
+    background-size: cover;
+    background-repeat: no-repeat;
 }
 
 .grow {
