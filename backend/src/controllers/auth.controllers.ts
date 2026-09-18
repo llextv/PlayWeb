@@ -7,7 +7,7 @@ import JWT from "../utils/JWT.js";
 const me = async (req: Request, res: Response) => {
   try{
     const userId = req.user?.id;
-
+    
     if (!userId) {
       return res.status(401).json({
         success: false,
