@@ -299,6 +299,7 @@ async function hydrateRemoteData(page) {
         genre: "PlayWeb",
         description: game.description || "Découvrez ce jeu PlayWeb.",
         launchUrl: game.launchUrl || null,
+        tag: game.tag || null,
       })));
     }
     return;
@@ -589,7 +590,7 @@ function renderShell() {
   document.querySelector("#app").innerHTML = `
     <div class="app">
       <aside class="sidebar">
-        <div class="brand"><span class="brand-mark">PW</span><span>PlayWeb</span></div>
+        <div class="brand"><img class="brand-mark" src="../assets/playweb-fav-w.png" alt="" /><span>PlayWeb</span></div>
         <nav class="nav">
           <a class="btn-nav" data-page-link="shop" href="../index/index.html"><i data-lucide="store"></i><span>Jeux</span></a>
           <a class="btn-nav" data-page-link="friends" href="../amis/index.html"><i data-lucide="users"></i><span>Amis</span></a>
