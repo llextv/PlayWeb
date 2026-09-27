@@ -5,10 +5,12 @@ import homeRoutes from './home.routes.js';
 import friendRoutes from './friend.routes.js';
 import gameRoutes from './game.routes.js';
 import successRoutes from './success.routes.js';
+import achievementsRoutes from './achievements.routes.js';
 
 const router = express.Router();
 
 router.use("/auth", authRoutes.router);
+router.use("/achievements", achievementsRoutes.router);
 
 router.use(authenticate);
 router.use("/home", homeRoutes.router);
