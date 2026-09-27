@@ -37,7 +37,7 @@ const register = async(req: Request, res: Response) => {
     return res.status(200).json({success: true, token: service.token});
   }catch(error){
     console.error(error);
-    return res.status(500).json({error: "Internal Server Error"});
+    return res.status(500).json({error: "Pseudo alrealy exist"});
   }
 }
 
