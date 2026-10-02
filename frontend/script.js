@@ -149,11 +149,10 @@ const api = {
   getRanking: (gameId) => apiRequest(`/ranking/${encodeURIComponent(gameId)}`),
   getBrainrotLeaderboard: async () => {
     try {
-      const response = await fetch(`${BRAINROT_API_BASE_URL}/leaderboard/coinPerSec`, {
-        headers: {
-          Accept: "application/json",
-          ...(session?.token ? { Authorization: "Bearer " + session.token } : {}),
-        },
+      // Route publique : pas de jeton, donc pas de preflight CORS, et le
+      // classement s'affiche meme pour un joueur sans compte BrainrotStar.
+      const response = await fetch(`${BRAINROT_API_BASE_URL}/leaderboard/public`, {
+        headers: { Accept: "application/json" },
       });
       const body = await response.json().catch(() => ({}));
       if (!response.ok || !body.success) {
@@ -164,6 +163,7 @@ const api = {
         result: {
           scores: (Array.isArray(body.result) ? body.result : []).map((entry) => ({
             score: Number(entry.goldPerSec || 0),
+            rebirth: Number(entry.hasRebirth || 0),
             user: { name: entry.pseudo || "Joueur" },
           })),
         },
