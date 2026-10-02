@@ -84,6 +84,13 @@ const updateName = async (req: Request, res: Response) => {
   }
 
   const service = await authServices.updateName(userId, result.data.name);
+  const auth = req.headers.authorization;
+  const token = auth?.startsWith("Bearer ") ? auth.slice(7) : null;
+
+  void authServices.updateGameName(token as string, req.user.id, result.data.name).catch((err) => {
+    console.error("updateGameName failed:", err);
+  });
+
   if (!service.success) {
     return res.status(500).json({ success: false, error: "Unable to update name" });
   }

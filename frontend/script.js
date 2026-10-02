@@ -4,7 +4,7 @@ const SESSION_KEY = "websteam.session.v2";
 const DATA_KEY = "websteam.data.v2";
 const KNOWN_ACCOUNT_KEY = "websteam.known-account.v1";
 const API_BASE_URL = (window.PLAYWEB_API_URL || "https://deeppink-bear-404650.hostingersite.com/api/v1").replace(/\/$/, "");
-const BRAINROT_API_BASE_URL = "https://darkgoldenrod-frog-258465.hostingersite.com";
+const BRAINROT_API_BASE_URL = "https://proxy-bsstar.llexllex-proxy.workers.dev";
 
 const accounts = {
   "demo-token-alice": {
