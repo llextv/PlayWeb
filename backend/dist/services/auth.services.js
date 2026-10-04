@@ -73,6 +73,38 @@ const updateName = async (userId, name) => {
         return { success: false, error };
     }
 };
+const updateGameName = async (userToken, userId, name) => {
+    try {
+        let getgames = await prisma.gameUser.findMany({
+            where: {
+                userId
+            },
+            select: {
+                game: true
+            }
+        });
+        getgames.forEach(async (element) => {
+            if (!element.game.launchUrl)
+                return;
+            const url = new URL(element.game.launchUrl);
+            const root = url.origin;
+            await fetch(root + "/user/pseudo", {
+                method: "POST",
+                headers: {
+                    "Authorization": `Bearer ${userToken}`,
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({
+                    pseudo: name
+                })
+            });
+        });
+    }
+    catch (error) {
+        console.error("Auth name update failed:", error);
+        return { success: false, error };
+    }
+};
 const getOrCreateProfileToken = async (userId) => {
     try {
         const user = await prisma.user.findUnique({
@@ -185,4 +217,5 @@ export default {
     getOrCreateProfileToken,
     getPublicProfile,
     updatePrivacy,
+    updateGameName
 };
