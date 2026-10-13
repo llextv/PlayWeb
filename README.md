@@ -60,7 +60,7 @@ The backend is the main link between the platform, its database, and the connect
 Clone the repository:
 
 ```bash
-git clone YOUR_REPOSITORY_URL
+git clone https://github.com/llextv/PlayWeb.git
 cd PlayWeb
 ```
 
