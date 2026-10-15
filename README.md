@@ -1,110 +1,29 @@
-# PlayWeb 🎮
+# PlayWeb
 
-PlayWeb is a gaming platform inspired by Steam. It brings different games together in one place and lets players use their account across supported games.
+PlayWeb est une plateforme de jeux en ligne codéveloppée par @gloxiou (frontend) et @llextv (backend et mise en production).
 
-The project includes a backend that manages player accounts, game connections, and achievements.
+Cette plateforme centralise les connexions des joueurs à l'ensemble des jeux développés avec l'API PlayWeb et approuvés par la plateforme. Pour le moment, aucune soumission de jeu n'est encore acceptée, car l'API publique destinée aux développeurs est toujours en cours de développement.
 
-## 🛠️ Technologies
+À l'image de Steam, PlayWeb permet également aux joueurs d'ajouter des amis, de débloquer des succès (*achievements*) et de profiter d'une expérience unifiée entre plusieurs jeux.
 
-- **Node.js** and **Express** for the backend API
-- **TypeScript** for the server code
-- **MySQL** to store data
-- **Prisma** to work with the database
-- **Socket.IO** for real-time communication
+## Technologies
 
-## ⚙️ How it works
+- **Backend :** Node.js avec TypeScript
+- **Frontend :** HTML, CSS et JavaScript natifs
+- **Base de données :** MySQL avec Prisma ORM
 
-PlayWeb connects the main platform with its games.
+## Comment ça marche ?
 
-- **Accounts:** Players use their PlayWeb account to access supported games.
-- **Authentication:** The backend uses tokens to identify players and check their access.
-- **Games:** Each game can communicate with the backend to use platform features.
-- **Achievements:** Games can send achievement requests to the backend, which checks the request before saving the achievement.
-- **Database:** MySQL stores the data needed by the platform.
+PlayWeb centralise l'authentification des joueurs sur les différents jeux affiliés et permet de gérer la transmission sécurisée des jetons d'authentification (*tokens*). Cette architecture permet aux joueurs d'utiliser un seul compte pour accéder à plusieurs jeux partenaires.
 
-This system makes it possible to connect several games to the same platform instead of building every feature separately for each game.
+Chaque jeu doit d'abord être enregistré auprès du serveur PlayWeb. Il peut ensuite configurer ses propres succès. Lorsqu'un joueur débloque un succès en jeu, les informations correspondantes sont transmises au serveur PlayWeb via un canal sécurisé.
 
-## 🏗️ Architecture
+## Limites actuelles
 
-```text
-             Player
-                |
-                v
-          PlayWeb Platform
-                |
-                v
-          Backend API
-          (Express + TS)
-                |
-          +-----+------+
-          |            |
-          v            v
-       MySQL       Game Services
-          |            |
-          v            v
-        Prisma    Game Servers
-```
+Nous sommes conscients que la plateforme présente actuellement des risques de sécurité, notamment concernant la perte de compte ou le vol de jetons d'authentification (*tokens*).
 
-The backend is the main link between the platform, its database, and the connected games.
+PlayWeb étant encore en cours de développement, des améliorations de sécurité sont prévues afin de renforcer progressivement la protection des comptes et des données des utilisateurs.
 
-## 🚀 Getting Started
-
-### Requirements
-
-- Node.js
-- npm
-- MySQL
-
-### Installation
-
-Clone the repository:
-
-```bash
-git clone https://github.com/llextv/PlayWeb.git
-cd PlayWeb
-```
-
-Go to the backend folder and install the dependencies:
-
-```bash
-cd backend
-npm install
-```
-
-### Configuration
-
-Create a `.env` file in the backend folder and add your database connection:
-
-```env
-DATABASE_URL="your_database_connection_url"
-```
-
-Replace the example value with your own MySQL connection details. Add any other environment variables required by the project.
-
-### Database setup
-
-Generate the Prisma client:
-
-```bash
-npx prisma generate
-```
-
-Make sure your database is configured and your Prisma schema is ready before starting the server.
-
-### Start the backend
-
-Check the scripts in `backend/package.json` and run the appropriate command. For example, if the project has a `dev` script:
-
-```bash
-npm run dev
-```
-
-## 🚧 Status
-
-PlayWeb is still in development. The platform and its connected games are updated as new features are built and tested.
-
-## 🎯 Goal
-
-The goal of PlayWeb is simple: bring games together, give players one account, and make achievements part of a shared gaming experience.
+**Quelques statistiques : plus de 100 joueurs se sont déjà connectés à la plateforme !**
 
 **One platform, many games.**
