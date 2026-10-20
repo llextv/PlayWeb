@@ -1,9 +1,16 @@
 import express from "express";
 import cors from "cors";
+import { fileURLToPath } from "node:url";
 import authRoutes from "./routes/auth.routes.js";
 import routes from "./routes/routes.js";
 
 const app = express();
+const port = Number(process.env.PLAYWEB_PORT) || 3000;
+
+if (process.env.SERVE_FRONTEND === "true") {
+  app.get("/", (req, res) => res.redirect(`/index/index.html${req.url.slice(1)}`));
+  app.use(express.static(fileURLToPath(new URL("../../frontend", import.meta.url)), { index: false, redirect: false }));
+}
 
 const allowedOrigins = process.env.FRONTEND_ORIGIN ?.split(",").map((origin) => origin.trim()) || [];
 
@@ -22,6 +29,6 @@ app.use(cors({
 app.use(express.json());
 app.use("/api/v1/", routes.router);
 
-app.listen(3000, () => {
-  console.log("Server running on http://localhost:3000");
+app.listen(port, () => {
+  console.log(`Server running on http://localhost:${port}`);
 });

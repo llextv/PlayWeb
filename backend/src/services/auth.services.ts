@@ -1,4 +1,5 @@
 import { prisma } from "../config/prisma.js"
+import moderationServices from "./moderation.services.js";
 import JWT from "../utils/JWT.js"
 import crypto from "node:crypto";
 
@@ -14,7 +15,8 @@ const getMe = async (userId: string) => {
     })
     if(!user) return {success: false, error: "Not find"}
 
-    return {success: true, user};
+    const nameBanned = await moderationServices.isNameBanned(user.name).catch(() => false);
+    return {success: true, user: {...user, nameBanned}};
   }catch(error){
     console.error("Auth getMe failed:", error);
     return {success: false, error}
@@ -73,6 +75,7 @@ const updateName = async (userId: string, name: string) => {
 
     return { success: true, user };
   } catch (error) {
+    if ((error as any)?.code === "P2002") return { success: false, taken: true };
     console.error("Auth name update failed:", error);
     return { success: false, error };
   }

@@ -1,0 +1,8 @@
+CREATE TABLE IF NOT EXISTS `BannedName` (
+    `nameKey` VARCHAR(64) NOT NULL,
+    `name` VARCHAR(64) NOT NULL,
+    `bannedBy` VARCHAR(64) NULL,
+    `bannedAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+
+    PRIMARY KEY (`nameKey`)
+) DEFAULT CHARACTER SET utf8mb4;

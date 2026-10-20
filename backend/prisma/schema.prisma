@@ -304,3 +304,10 @@ model UserAchievement {
   @@unique([userId, achievementId])
   @@index([achievementId])
 }
+
+model BannedName {
+  nameKey  String   @id @db.VarChar(64)
+  name     String   @db.VarChar(64)
+  bannedBy String?  @db.VarChar(64)
+  bannedAt DateTime @default(now())
+}

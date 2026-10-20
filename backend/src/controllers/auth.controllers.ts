@@ -1,6 +1,7 @@
 import { Request, Response } from "express";
 import { z } from "zod";
 import authServices from "../services/auth.services.js";
+import moderationServices from "../services/moderation.services.js";
 import JWT from "../utils/JWT.js";
 
 
@@ -44,7 +45,10 @@ const register = async(req: Request, res: Response) => {
 const updateAvatar = async (req: Request, res: Response) => {
   const userId = req.user?.id;
   const result = z.object({
-    avatarUrl: z.union([z.string().url(), z.literal("")]).nullable(),
+    avatarUrl: z.union([
+      z.string().trim().max(2048).url().refine((url) => /^https?:\/\//i.test(url)),
+      z.literal(""),
+    ]).nullable(),
   }).safeParse(req.body);
 
   if (!userId) {
@@ -83,7 +87,18 @@ const updateName = async (req: Request, res: Response) => {
     });
   }
 
+  if (/[<>\u0000-\u001f\u007f]/.test(result.data.name)) {
+    return res.status(400).json({ success: false, error: "Ce pseudo contient des caractères interdits (< >)." });
+  }
+
+  if (await moderationServices.isNameBanned(result.data.name).catch(() => false)) {
+    return res.status(400).json({ success: false, error: "Ce pseudo est interdit." });
+  }
+
   const service = await authServices.updateName(userId, result.data.name);
+  if (!service.success && (service as any).taken) {
+    return res.status(409).json({ success: false, error: "Ce pseudo est déjà pris." });
+  }
   const auth = req.headers.authorization;
   const token = auth?.startsWith("Bearer ") ? auth.slice(7) : null;
 
