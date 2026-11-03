@@ -59,7 +59,15 @@
 }
 
 .games-grid {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
   align-items: stretch;
+}
+
+.games-grid .game-card {
+  flex: 1 1 280px;
+  max-width: 360px;
 }
 
 @media (max-width: 600px) {

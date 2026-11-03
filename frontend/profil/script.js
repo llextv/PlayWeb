@@ -11,8 +11,15 @@ window.pageInit = ({ user, data, games, setText, toast, save, icons, api }) => {
   }
   const achievements = data.achievements || [];
   const unlocked = achievements.filter((item) => item.done).length;
-  const playedGames = games.filter((game) => profile.games?.[game.id]?.played);
+  const isSoon = (game) => /^(very[\s_-]+)?soon$/i.test(String(game.tag || "").trim());
+  const availableGames = games.filter((game) => !isSoon(game));
+  const playedGames = availableGames.filter((game) => profile.games?.[game.id]?.played);
   const totalHours = games.reduce((sum, game) => sum + Number(profile.games?.[game.id]?.hours || 0), 0);
+  const formatHours = (hours) => {
+    const value = Math.max(0, Number(hours) || 0);
+    if (value > 0 && value < 1) return `${Math.max(1, Math.round(value * 60))} min`;
+    return `${value >= 100 ? Math.round(value) : value.toFixed(1)} h`;
+  };
   let profileShareUrl = null;
   const copyProfileLink = async (url) => {
     if (navigator.clipboard && window.isSecureContext) {
@@ -53,8 +60,8 @@ window.pageInit = ({ user, data, games, setText, toast, save, icons, api }) => {
   setText("[data-profile-joined]", new Date(profile.joinedAt || Date.now()).toLocaleDateString("fr-FR", { month: "long", year: "numeric" }));
   setText("[data-friends-count]", profile.friendsCount ?? data.friends.length);
   setText("[data-achievements-count]", `${unlocked} / ${achievements.length}`);
-  setText("[data-hours-count]", `${totalHours.toFixed(1)} h`);
-  setText("[data-games-count]", `${playedGames.length} / ${games.length}`);
+  setText("[data-hours-count]", formatHours(totalHours));
+  setText("[data-games-count]", `${playedGames.length} / ${availableGames.length}`);
   document.querySelector("[data-profile-input]").value = user.name;
 
   const percent = achievements.length ? Math.round((unlocked / achievements.length) * 100) : 0;
@@ -64,15 +71,17 @@ window.pageInit = ({ user, data, games, setText, toast, save, icons, api }) => {
   document.querySelector("[data-achievement-progress]").style.width = `${percent}%`;
 
   const activity = document.querySelector("[data-game-activity]");
-  games.forEach((game) => {
+  [...availableGames, ...games.filter(isSoon)].forEach((game) => {
+    const soon = isSoon(game);
     const stats = profile.games?.[game.id] || { hours: 0, played: false };
+    const label = soon ? "Bientôt" : stats.played ? "Joué" : "Jamais joué";
     const row = document.createElement("article");
-    row.className = `game-activity-row ${stats.played ? "" : "not-played"}`;
+    row.className = `game-activity-row${soon ? " is-soon" : stats.played ? "" : " not-played"}`;
     row.innerHTML = `
-      <div class="game-mark ${escapeHtml(game.id)}">${escapeHtml(game.name.slice(0, 1))}</div>
-      <div class="grow"><div class="game-row-title"><b>${escapeHtml(game.name)}</b><span class="${stats.played ? "tag" : "muted"}">${stats.played ? "Joué" : "Jamais joué"}</span></div>
+      <div class="game-mark ${escapeHtml(game.slug || game.id)}">${escapeHtml(game.name.slice(0, 1))}</div>
+      <div class="grow"><div class="game-row-title"><b>${escapeHtml(game.name)}</b><span class="${stats.played && !soon ? "tag" : "muted"}">${label}</span></div>
       <div class="activity-track"><i style="width: ${Math.min(100, stats.hours * 4)}%"></i></div></div>
-      <strong class="game-hours">${Number(stats.hours).toFixed(1)} h</strong>`;
+      <strong class="game-hours">${soon ? "—" : formatHours(stats.hours)}</strong>`;
     activity.append(row);
   });
 

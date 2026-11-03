@@ -7,12 +7,14 @@ import gameRoutes from './game.routes.js';
 import successRoutes from './success.routes.js';
 import achievementsRoutes from './achievements.routes.js';
 import moderationRoutes from './moderation.routes.js';
+import syncRoutes from './sync.routes.js';
 
 const router = express.Router();
 
 router.use("/auth", authRoutes.router);
 router.use("/achievements", achievementsRoutes.router);
 router.use("/moderation", moderationRoutes.router);
+router.use("/sync", syncRoutes.router);
 
 router.use(authenticate);
 router.use("/home", homeRoutes.router);

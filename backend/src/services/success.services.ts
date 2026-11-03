@@ -3,6 +3,9 @@ import { prisma } from "../config/prisma.js";
 const getAllSuccess = async() => {
   try{
     let result = await prisma.success.findMany({
+      where: {
+        game: { isActive: true },
+      },
       include: {
         game: true,
       },

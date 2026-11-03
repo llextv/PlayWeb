@@ -1,3 +1,9 @@
+const formatHours = (hours) => {
+  const value = Math.max(0, Number(hours) || 0);
+  if (value > 0 && value < 1) return `${Math.max(1, Math.round(value * 60))} min`;
+  return `${value >= 100 ? Math.round(value) : value.toFixed(1)} h`;
+};
+
 (() => {
   const IS_LOCAL = /^(localhost|127\.0\.0\.1)$/.test(window.location.hostname);
   const API_BASE_URL = (window.PLAYWEB_API_URL || (IS_LOCAL
@@ -49,10 +55,10 @@
           <div class="shared-profile-grid">
             <div class="shared-profile-stat"><strong>${Number(profile.friendsCount) || 0}</strong><span>Amis</span></div>
             <div class="shared-profile-stat"><strong>${Number(profile.achievementsCount) || 0}</strong><span>Succès</span></div>
-            <div class="shared-profile-stat"><strong>${totalHours.toFixed(1)} h</strong><span>Jeu</span></div>
+            <div class="shared-profile-stat"><strong>${formatHours(totalHours)}</strong><span>Jeu</span></div>
           </div>
           <div class="shared-profile-games">
-            ${profile.games.length ? profile.games.map((game) => `<div class="shared-profile-game"><span>${escapeHtml(game.name)}</span><strong>${Number(game.playedHours).toFixed(1)} h</strong></div>`).join("") : '<p class="muted">Aucune activité de jeu pour le moment.</p>'}
+            ${profile.games.length ? profile.games.map((game) => `<div class="shared-profile-game"><span>${escapeHtml(game.name)}</span><strong>${formatHours(game.playedHours)}</strong></div>`).join("") : '<p class="muted">Aucune activité de jeu pour le moment.</p>'}
           </div>`;
       if (avatarImage) root.querySelector(".shared-profile-avatar").style.backgroundImage = avatarImage;
       document.title = `${profile.name} — Profil PlayWeb`;

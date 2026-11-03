@@ -46,13 +46,13 @@ document.addEventListener("DOMContentLoaded", () => {
   initDiscordModal();
 });
 
-window.pageInit = ({ games, setText, session }) => {
+window.pageInit = ({ games, setText, session, api }) => {
   setText("#page-title", "Découvrir");
   setText("[data-games-count]", `${games.length} jeux`);
   const grid = document.querySelector(".games-grid");
   games.forEach((game) => {
     const mode =
-      document.querySelector(`[data-game-id="${game.id}"]`)?.dataset.gameMode ||
+      document.querySelector(`[data-game-id="${game.slug || game.id}"]`)?.dataset.gameMode ||
       "MULTI";
     const comingSoon = getComingSoonLabel(game.tag);
     const card = document.createElement("article");
@@ -69,6 +69,7 @@ window.pageInit = ({ games, setText, session }) => {
     const launchUrl = safeHttpUrl(game.launchUrl) && game.launchUrl;
     if (launchUrl && !comingSoon) {
       card.querySelector(".game-play").onclick = () => {
+        if (api) api.playGame(game.id);
         window.location.href = launchUrl.replace("[token de la personne]", encodeURIComponent(session.token));
       };
     }

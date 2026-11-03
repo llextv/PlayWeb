@@ -68,12 +68,7 @@ const games = [
     name: "GambleKing",
     genre: "Gamble • Multi",
     description: "Du gamble, du troll, et des potes.",
-  },
-  {
-    id: "chess",
-    name: "Chess",
-    genre: "Échecs • Dames",
-    description: "Jouez aux échecs ainsi qu'aux dames contre vos potes.",
+    tag: "soon",
   },
 ];
 
@@ -85,7 +80,6 @@ const defaults = {
     games: {
       brainrotstar: { hours: 0, played: false },
       gambleking: { hours: 0, played: false },
-      chess: { hours: 0, played: false },
     },
   },
   friends: [],
@@ -161,6 +155,7 @@ const api = {
   getMe: () => apiRequest("/auth/me"),
   getHome: () => apiRequest("/home"),
   getGames: () => apiRequest("/game"),
+  playGame: (gameId) => apiRequest(`/game/${encodeURIComponent(gameId)}/play`, { method: "POST", keepalive: true }),
   getFriends: () => apiRequest("/friends"),
   askFriend: (friendUserId) => apiRequest(`/friends/${encodeURIComponent(friendUserId)}`, { method: "POST" }),
   acceptFriend: (friendId) => apiRequest(`/friends/accept/${encodeURIComponent(friendId)}`, { method: "POST" }),
@@ -274,7 +269,7 @@ function mergeRemoteData(remote) {
         gameUser.gameId,
         {
           hours: Number(gameUser.playedHours || 0),
-          played: Number(gameUser.playedHours || 0) > 0,
+          played: true,
         },
       ])),
     };
@@ -353,6 +348,7 @@ async function hydrateRemoteData(page) {
         genre: "PlayWeb",
         description: game.description || "Découvrez ce jeu PlayWeb.",
         launchUrl: game.launchUrl || null,
+        tag: game.tag || null,
       })));
     }
     const gameNames = new Map(games.map((game) => [game.id, game.name]));
@@ -379,6 +375,7 @@ async function hydrateRemoteData(page) {
       achievements: (allSuccesses.result || []).map((success) => ({
         id: success.id,
         name: success.title || "Succès",
+        description: success.description || "",
         game: success.game?.name || gameNames.get(success.gameId) || success.gameId || "PlayWeb",
         icon: "trophy",
         rare: success.rarity || "COMMON",
@@ -403,6 +400,7 @@ async function hydrateRemoteData(page) {
           genre: "PlayWeb",
           description: game.description || "Découvrez ce jeu PlayWeb.",
           launchUrl: game.launchUrl || null,
+          tag: game.tag || null,
         })));
     }
     const remoteAchievements = (gameUsers.games || []).flatMap((gameUser) => {
